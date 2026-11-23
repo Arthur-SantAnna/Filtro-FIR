@@ -1,0 +1,46 @@
+# Sistema operacional (macOS)
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# MATLAB — arquivos temporários e backups (mantém .m, .mat, figuras e resultados)
+*.asv
+*.m~
+*.autosave
+*.mex*
+*.slxc
+slprj/
+codegen/
+
+# LaTeX — arquivos intermediários de compilação (mantém .tex e .pdf)
+*.aux
+*.bbl
+*.blg
+*.bcf
+*.fdb_latexmk
+*.fls
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+_minted*/
+
+# Editores e IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Notas e prompts locais de fluxo de trabalho (não versionados)
+docs/PROMPTS_FASES.md

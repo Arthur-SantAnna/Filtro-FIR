@@ -75,18 +75,34 @@ Filtro-FIR/
 ### Fase 0 — Setup do Repositório e Infraestrutura Base
 **Objetivo:** Preparar ambiente MATLAB, estrutura de diretórios e funções utilitárias compartilhadas antes de implementar as etapas de PDS.
 
-- [ ] Criar a árvore de diretórios (`src/`, `src/utils/`, `data/`, `figures/`, `results/`, `report/`).
-- [ ] Criar `src/config_specs.m` centralizando todas as constantes com comentários e unidades claras (`Fs = 8000; % [Hz]`, `Fpass = 1000; % [Hz]`, `Fstop = 2200; % [Hz]`, `fc = 1600; % [Hz]`, `tol_pass_dB = 0.1; % [dB]`, `aten_stop_dB = 45; % [dB]`).
-- [ ] Criar `src/utils/avaliar_mascara.m`:
+- [x] Criar a árvore de diretórios (`src/`, `src/utils/`, `data/`, `figures/`, `results/`, `report/`, `entrega/`).
+- [x] Criar `src/config_specs.m` centralizando todas as constantes com comentários e unidades claras (`Fs = 8000; % [Hz]`, `Fpass = 1000; % [Hz]`, `Fstop = 2200; % [Hz]`, `fc = 1600; % [Hz]`, `tol_pass_dB = 0.1; % [dB]`, `aten_stop_dB = 45; % [dB]`).
+- [x] Criar `src/utils/avaliar_mascara.m`:
   - Entrada: vetor de coeficientes `h`, parâmetros da máscara, grade densa de frequência (ex.: `Nfft = 16384` ou `32768` pontos em `[0, Fs/2]`).
   - Saída: `desvio_pass_max_dB` ($\max |20\log_{10}|H(f)||$ na faixa $[0, 1000]\text{ Hz}$), `aten_stop_min_dB` ($\min (-20\log_{10}|H(f)|)$ na faixa $[2200, 4000]\text{ Hz}$), `ganho_dc_dB` e booleano `atende_mascara`.
   - **Cuidado crítico:** Usar grade de frequência suficientemente densa (`>= 16384` pontos) para não perder picos estreitos de ripple próximos às bordas de $1.000\text{ Hz}$ e $2.200\text{ Hz}$.
-- [ ] Criar `src/utils/salvar_figura.m` para padronizar tamanho, fonte legível, legendas, grid e exportação automática em `.png` (300 dpi) e `.pdf` (vetorial para LaTeX).
+- [x] Criar `src/utils/salvar_figura.m` para padronizar tamanho, fonte legível, legendas, grid e exportação automática em `.png` (300 dpi) e `.pdf` (vetorial para LaTeX).
 
 ---
 
-### Fase 1 — Etapa A: Projeto por Janelamento (Série de Fourier + Hamming)
+### Fase 1 — Etapa A: Projeto por Janelamento (Série de Fourier + Hamming) [CONCLUÍDA]
 **Script:** `src/etapa_A_janelamento.m`
+
+- [x] Calcular $\Delta f = 1.200\text{ Hz}$, $\Delta\omega = 0{,}3\pi\text{ rad/amostra}$ e estimativa inicial ($N_{\text{est}} = 22$ para fator $3{,}3$; $N_{\text{est,alt}} = 27$ para fator $4{,}0$).
+- [x] Varredura de comprimentos pares e ímpares ($N = 15$ a $45$) com tratamento explícito de $n = (N-1)/2$, janela de Hamming e normalização `h = h / sum(h)`.
+- [x] Seleção do menor comprimento válido ($N = 23$, ordem $M = 22$) e exportação de `results/tab_A1_varredura_N.csv`, `results/tab_A2_metricas_finais.csv` e `data/coeficientes_FIR.mat`.
+- [x] Geração das figuras `figures/fig_A1_impulso_janela` e `figures/fig_A2_magnitude_mascara` (`.pdf` e `.png`).
+
+> **Resumo dos Valores Numéricos Obtidos (Fase 1 / Etapa A):**
+> - $\Delta f = 1.200\text{ Hz}$, $\Delta\omega = 0{,}3\pi\text{ rad/amostra} \approx 0{,}942478\text{ rad/amostra}$
+> - Estimativa inicial: $N_{\text{est}} = \lceil 3{,}3 / 0{,}15 \rceil = 22$ (fator $3{,}3$) | $N_{\text{est,alt}} = \lceil 4{,}0 / 0{,}15 \rceil = 27$ (fator $4{,}0$)
+> - **Menor comprimento aprovado:** $N = 23$ coeficientes (ímpar, **Ordem $M = 22$**)
+>   - *(Nota: $N = 21$ e $N = 22$ atendem à banda passante com $0{,}0637\text{ dB}$ e $0{,}0440\text{ dB}$, mas reprovam na rejeição com $40{,}6091\text{ dB}$ e $44{,}0615\text{ dB} < 45\text{ dB}$ na borda de $2.200\text{ Hz}$.)*
+> - **Desvio máximo na banda passante ($N=23$):** $0{,}042323\text{ dB}$ ($\le 0{,}10\text{ dB}$)
+> - **Atenuação mínima na banda de rejeição ($N=23$):** $47{,}0065\text{ dB}$ ($\ge 45{,}00\text{ dB}$)
+> - **Soma dos coeficientes $\sum h[k]$:** $1{,}0000000000000000$ (Ganho DC $= 0{,}0000\text{ dB}$)
+> - **Erro máximo de simetria $\max |h[k] - h[N-1-k]|$:** $0$ (`0.0000e+00`)
+> - **Atraso de grupo constante:** $\tau_g = 11{,}0\text{ amostras} = 1{,}3750\text{ ms}$
 
 #### Procedimentos de Código
 1. Calcular $\Delta f = F_{\text{stop}} - F_{\text{pass}} = 1.200\text{ Hz}$ e $\Delta\omega = \frac{2\pi\Delta f}{F_s} = 0{,}3\pi\text{ rad/amostra}$.

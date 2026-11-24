@@ -1,0 +1,955 @@
+% ==============================================================================
+% RELATÓRIO TÉCNICO — PRÁTICA 3: PROJETO DE FILTRO FIR PASSA-BAIXA
+% Centro Universitário SENAI CIMATEC — Processamento Digital de Sinais (2026)
+% Professor: Elio Pithon Sarno Filho
+%
+% INSTRUÇÕES DE COMPILAÇÃO NO OVERLEAF:
+%   1. Crie um projeto em branco no Overleaf (Compilador: pdfLaTeX).
+%   2. Faça upload deste arquivo `main.tex` na raiz do projeto.
+%   3. Crie uma pasta `figures/` no Overleaf e envie os 8 arquivos `.pdf`
+%      (ou `.png`) gerados pelo MATLAB na pasta `figures/` do repositório.
+%      (O comando \graphicspath também aceita as figuras soltas na raiz).
+% ==============================================================================
+\documentclass[11pt,a4paper]{article}
+
+% --- Codificação, Fontes e Idioma ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{indentfirst}
+
+% --- Geometria e Layout da Página ---
+\usepackage[a4paper, top=2.2cm, bottom=2.2cm, left=2.0cm, right=2.0cm, headheight=15pt]{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+
+% --- Matemática e Unidades ---
+\usepackage{amsmath, amssymb, mathtools}
+\usepackage{siunitx}
+\sisetup{
+    output-decimal-marker = {,},
+    group-separator = {.},
+    group-minimum-digits = 4,
+    detect-all = true,
+    per-mode = symbol
+}
+
+% --- Tabelas, Figuras e Cores ---
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{adjustbox}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{graphicx}
+\graphicspath{{./figures/}{../figures/}{./}}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\captionsetup{
+    font=small,
+    labelfont=bf,
+    labelsep=period,
+    justification=justified
+}
+
+% --- Diagramas Vetoriais (TikZ) ---
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc, shapes.geometric}
+
+% --- Listagens de Código MATLAB ---
+\usepackage{listings}
+
+% Paleta institucional e de código
+\definecolor{cimatecblue}{RGB}{0, 74, 143}
+\definecolor{cimatecgray}{RGB}{242, 245, 249}
+\definecolor{codebg}{RGB}{248, 249, 250}
+\definecolor{codeframe}{RGB}{210, 215, 220}
+\definecolor{codekw}{RGB}{0, 64, 150}
+\definecolor{codecomment}{RGB}{34, 120, 55}
+\definecolor{codestr}{RGB}{163, 21, 21}
+\definecolor{rowpass}{RGB}{235, 248, 238}
+\definecolor{rowfail}{RGB}{253, 242, 242}
+
+\lstdefinestyle{matlabstyle}{
+    language=Matlab,
+    backgroundcolor=\color{codebg},
+    frame=single,
+    rulecolor=\color{codeframe},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{codekw}\bfseries,
+    commentstyle=\color{codecomment}\itshape,
+    stringstyle=\color{codestr},
+    numbers=left,
+    numberstyle=\tiny\color{gray!80!black},
+    stepnumber=1,
+    numbersep=8pt,
+    tabsize=4,
+    showspaces=false,
+    showstringspaces=false,
+    breaklines=true,
+    breakatwhitespace=true,
+    captionpos=b,
+     inputencoding=utf8,
+    extendedchars=true,
+    literate=%
+        {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+        {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+        {à}{{\`a}}1 {ã}{{\~a}}1 {õ}{{\~o}}1 {â}{{\^a}}1 {ê}{{\^e}}1 {ô}{{\^o}}1
+        {ç}{{\c{c}}}1 {Ç}{{\c{C}}}1
+}
+
+% --- Hiperlinks e Metadados do PDF ---
+\usepackage[
+    colorlinks=true,
+    linkcolor=cimatecblue,
+    citecolor=cimatecblue,
+    urlcolor=cimatecblue,
+    pdftitle={Prática 3 — Projeto de Filtro FIR Passa-Baixa (SENAI CIMATEC)},
+    pdfauthor={Disciplina de Processamento Digital de Sinais — SENAI CIMATEC},
+    pdfsubject={Projeto de Filtro FIR Passa-Baixa, Buffer Circular e Quantização em Ponto Fixo}
+]{hyperref}
+
+% --- Estilização de Seções e Cabeçalhos ---
+\titleformat{\section}{\large\bfseries\color{cimatecblue}}{\thesection.}{0.5em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{cimatecblue!85!black}}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\itshape\bfseries}{\thesubsubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{14pt}{6pt}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+\titlespacing*{\subsubsection}{0pt}{8pt}{3pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\textcolor{gray!80!black}{\textbf{SENAI CIMATEC} — Processamento Digital de Sinais}}
+\fancyhead[R]{\footnotesize\textcolor{gray!80!black}{Prática 3: Projeto de Filtro FIR Passa-Baixa}}
+\fancyfoot[C]{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ==============================================================================
+% MACROS OFICIAIS GERADAS AUTOMATICAMENTE POR src/main.m (results/metricas_relatorio.tex)
+% Fonte única da verdade numérica para consistência com os scripts MATLAB
+% ==============================================================================
+% --- Etapa A: Projeto por Janelamento (Hamming) ---
+\newcommand{\MetricaAN}{23}
+\newcommand{\MetricaAOrdem}{22}
+\newcommand{\MetricaADesvioPassdB}{0,042323}
+\newcommand{\MetricaAAtenStopdB}{47,0065}
+\newcommand{\MetricaASomaCoefs}{1,0000000000}
+\newcommand{\MetricaAGanhoDCdB}{0,000000}
+\newcommand{\MetricaAErroSimetria}{0,0000\times 10^{0}}
+\newcommand{\MetricaAAtrasoAmostras}{11,0}
+\newcommand{\MetricaAAtrasoMs}{1,3750}
+
+% --- Etapa A2: Comparação com Equiripple ---
+\newcommand{\MetricaAIIEqN}{15}
+\newcommand{\MetricaAIIEqOrdem}{14}
+\newcommand{\MetricaAIIEqDesvioPassdB}{0,083846}
+\newcommand{\MetricaAIIEqAtenStopdB}{46,5690}
+\newcommand{\MetricaAIIEqGanhoDCdB}{+0,082627}
+\newcommand{\MetricaAIIEqSomaCoefs}{1,009558}
+\newcommand{\MetricaAIIEqAtrasoAmostras}{7,0}
+\newcommand{\MetricaAIIEqAtrasoMs}{0,8750}
+\newcommand{\MetricaAIIReducaoCoefsPerc}{34,78}
+
+% --- Etapa B: Buffer Circular ---
+\newcommand{\MetricaBErroMaxImpFilter}{0,000000\times 10^{0}}
+\newcommand{\MetricaBErroMaxImpH}{0,000000\times 10^{0}}
+\newcommand{\MetricaBErroMaxSenFilter}{3,330669\times 10^{-16}}
+\newcommand{\MetricaBGanhoPassLin}{0,99783632}
+\newcommand{\MetricaBGanhoPassdB}{-0,018814}
+\newcommand{\MetricaBGanhoStopLin}{0,00235009}
+\newcommand{\MetricaBGanhoStopdB}{-52,5783}
+\newcommand{\MetricaBAtenStopdB}{52,5783}
+
+% --- Etapa C: Quantização de Coeficientes ---
+\newcommand{\MetricaCErroMaxQXV}{1,397490\times 10^{-5}}
+\newcommand{\MetricaCEQMQXV}{9,057312\times 10^{-11}}
+\newcommand{\MetricaCSomaQXV}{0,99993896}
+\newcommand{\MetricaCGanhoDCQXVdB}{-0,000530}
+\newcommand{\MetricaCDesvioPassQXVdB}{0,042440}
+\newcommand{\MetricaCAtenStopQXVdB}{46,9752}
+\newcommand{\MetricaCErroMaxQVII}{2,673012\times 10^{-3}}
+\newcommand{\MetricaCEQMQVII}{2,260906\times 10^{-6}}
+\newcommand{\MetricaCSomaQVII}{0,97656250}
+\newcommand{\MetricaCGanhoDCQVIIdB}{-0,205999}
+\newcommand{\MetricaCDesvioPassQVIIdB}{0,205999}
+\newcommand{\MetricaCAtenStopQVIIdB}{39,8632}
+
+% --- Etapa D: Quantização de Amostras (Q1.7) ---
+\newcommand{\MetricaDCasoISNRIn}{46,8120}
+\newcommand{\MetricaDCasoISNROut}{55,8395}
+\newcommand{\MetricaDCasoIDeltaSNR}{+9,0275}
+\newcommand{\MetricaDCasoIISNRIn}{46,8428}
+\newcommand{\MetricaDCasoIISNROut}{57,7056}
+\newcommand{\MetricaDCasoIIDeltaSNR}{+10,8628}
+
+% --- Etapa E: Precisão Aritmética e Overflow ---
+\newcommand{\MetricaEProdCompleto}{0,21697998046875}
+\newcommand{\MetricaEProdArred}{0,2187500}
+\newcommand{\MetricaEErroArred}{+0,00177001953125}
+\newcommand{\MetricaEProdTrunc}{0,2109375}
+\newcommand{\MetricaEErroTrunc}{-0,00604248046875}
+\newcommand{\MetricaENormaLI}{1,47339547500902}
+\newcommand{\MetricaENormaLIdB}{3,3664}
+
+% ==============================================================================
+\begin{document}
+
+% --- CABEÇALHO INSTITUCIONAL SENAI CIMATEC ---
+\noindent
+\begin{tabular}{|p{0.62\textwidth}|p{0.32\textwidth}|}
+    \hline
+    \rowcolor{cimatecgray}
+    \multicolumn{2}{|c|}{\vspace{2pt}\large\textbf{\textcolor{cimatecblue}{CENTRO UNIVERSITÁRIO SENAI CIMATEC}}\vspace{2pt}} \\
+    \hline
+    \textbf{Disciplina:} Processamento Digital de Sinais & \textbf{Avaliação:} Prática 3 \\
+    \hline
+    \textbf{Professor(a):} Elio Pithon Sarno Filho & \textbf{Data:} 02 de dezembro de 2026 \\
+    \hline
+    \textbf{Equipe:} Arthur Sant'Anna; Giulia Franca; Joseph Neiva; Matheus Sá & \textbf{Plataforma:} MATLAB R2026b \\
+    \hline
+\end{tabular}
+
+\vspace{12pt}
+\begin{center}
+    {\LARGE\bfseries\textcolor{cimatecblue}{Projeto de Filtro FIR Passa-Baixa}}\\[4pt]
+    {\normalsize Síntese por Série de Fourier com Janela de Hamming, Filtragem em Buffer Circular e Análise de Efeitos de Quantização em Ponto Fixo (\texttt{Q1.15} e \texttt{Q1.7})}
+\end{center}
+\vspace{4pt}
+
+% ==============================================================================
+% 1. OBJETIVO E ESPECIFICAÇÕES
+% ==============================================================================
+\section{Objetivo e Especificações do Filtro}
+
+O presente trabalho tem por objetivo projetar, validar e analisar um filtro digital de resposta ao impulso finita (\textit{Finite Impulse Response} --- FIR) passa-baixa linear em fase pelo método da série de Fourier com janelamento de Hamming. O estudo abrange: (i) a determinação experimental do menor comprimento $N$ capaz de cumprir rigorosamente a máscara espectral de especificações; (ii) o confronto de desempenho e custo computacional frente à síntese ótima minimax (\textit{Equiripple} via \textit{Filter Designer}); (iii) a implementação algorítmica da filtragem no domínio do tempo amostra a amostra empregando estrutura de buffer circular (\texttt{fir\_circular}) sem deslocamento físico de memória; e (iv) a investigação isolada dos efeitos de palavra finita decorrentes da quantização de coeficientes (\texttt{Q1.15} e \texttt{Q1.7}), da quantização de amostras de entrada (\texttt{Q1.7}) e dos limites da aritmética de ponto fixo (crescimento de palavra e \textit{overflow}).
+
+A Tabela~\ref{tab:especificacoes} consolida os parâmetros normativos imutáveis da máscara de projeto adotados em todos os módulos de simulação (\texttt{src/config\_specs.m}).
+
+\begin{table}[H]
+    \centering
+    \caption{Especificações técnicas da máscara do filtro FIR passa-baixa e parâmetros de avaliação espectral.}
+    \label{tab:especificacoes}
+    \small
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{@{}llcl@{}}
+        \toprule
+        \textbf{Parâmetro de Projeto} & \textbf{Símbolo / Variável} & \textbf{Valor Especificado} & \textbf{Unidade} \\
+        \midrule
+        Frequência de amostragem & $F_s$ (\texttt{Fs}) & $\SI{8000}{}$ & \si{Hz} \\
+        Frequência de Nyquist & $F_s / 2$ (\texttt{Fnyq}) & $\SI{4000}{}$ & \si{Hz} \\
+        Banda passante & $[0,\, F_{\text{pass}}]$ (\texttt{Fpass}) & $0 \text{ a } \SI{1000}{}$ & \si{Hz} \\
+        Desvio máximo na banda passante & $\pm\delta_p$ (\texttt{tol\_pass\_dB}) & $\pm 0,10 \text{ (em torno de } \SI{0}{dB}\text{)}$ & \si{dB} \\
+        Banda de rejeição & $[F_{\text{stop}},\, F_s/2]$ (\texttt{Fstop}) & $\SI{2200}{} \text{ a } \SI{4000}{}$ & \si{Hz} \\
+        Atenuação mínima na banda de rejeição & $A_s$ (\texttt{aten\_stop\_dB}) & $\ge 45,00$ & \si{dB} \\
+        Banda de transição & $\Delta f = F_{\text{stop}} - F_{\text{pass}}$ & $\SI{1000}{} \text{ a } \SI{2200}{} \text{ (}\Delta f = \SI{1200}{}\text{)}$ & \si{Hz} \\
+        Frequência de corte ideal inicial & $f_c = (F_{\text{pass}} + F_{\text{stop}})/2$ & $\SI{1600}{}$ & \si{Hz} \\
+        Método principal de síntese & --- & Série de Fourier + Janela de Hamming & --- \\
+        Grade de avaliação da máscara & $N_{\text{FFT}}$ (\texttt{Nfft}) & $32768 \text{ pontos em } [0,\, F_s/2]$ & pontos \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+% ==============================================================================
+% 2. METODOLOGIA SUCINTA
+% ==============================================================================
+\section{Metodologia Sucinta}
+
+O fluxo experimental foi estruturado de forma inteiramente automatizada e reprodutível em MATLAB (\texttt{src/main.m}), dividido em seis etapas encadeadas:
+
+\begin{enumerate}[leftmargin=1.6em, itemsep=2pt, topsep=3pt]
+    \item \textbf{Síntese por Janelamento e Verificação de Máscara (Etapa A):} A resposta ao impulso ideal de um filtro passa-baixa causal de comprimento $N$ (ordem $M = N - 1$), com frequência de corte normalizada $\omega_c = 2\pi f_c / F_s = 0,4\pi\text{ rad/amostra}$ e centro de simetria $\alpha = (N-1)/2$, é obtida analiticamente pela transformada inversa de Fourier em tempo discreto (IDTFT):
+    \begin{equation}
+        h_{\text{ideal}}[n] = \begin{cases}
+            \dfrac{\omega_c}{\pi} = \dfrac{2 f_c}{F_s}, & \text{se } n = \alpha \text{ (quando } N \text{ é ímpar)}, \\[10pt]
+            \dfrac{\sin\!\big(\omega_c (n - \alpha)\big)}{\pi (n - \alpha)}, & \text{se } n \neq \alpha,
+        \end{cases}
+        \qquad n = 0, 1, \dots, N-1.
+        \label{eq:hideal}
+    \end{equation}
+    Para mitigar as oscilações do fenômeno de Gibbs decorrentes do truncamento abrupto, multiplica-se $h_{\text{ideal}}[n]$ pela janela de Hamming simétrica $w[n] = 0,54 - 0,46\cos\!\big(\frac{2\pi n}{N-1}\big)$ e normaliza-se o vetor resultante para ganho unitário em corrente contínua ($\text{DC}$, $\omega = 0$):
+    \begin{equation}
+        h_{\text{win}}[n] = h_{\text{ideal}}[n] \cdot w[n], \qquad h[n] = \frac{h_{\text{win}}[n]}{\sum_{k=0}^{N-1} h_{\text{win}}[k]}.
+        \label{eq:hnorm}
+    \end{equation}
+    Todas as versões de filtros ao longo do projeto são auditadas pela mesma rotina compartilhada (\texttt{avaliar\_mascara.m}) utilizando \texttt{freqz} sobre $N_{\text{FFT}} = 32768$ pontos ($\Delta f_{\text{grade}} \approx \SI{0,122}{Hz}$), avaliando simultaneamente o desvio máximo na passante $\delta_{p,\text{máx}} = \max_{f \in [0, 1000]} \big|20\log_{10}|H(f)|\big| \le \SI{0,10}{dB}$ e a atenuação mínima na rejeição $A_{s,\text{mín}} = \min_{f \in [2200, 4000]} \big(-20\log_{10}|H(f)|\big) \ge \SI{45,00}{dB}$.
+
+    \item \textbf{Referência Comparativa Equiripple (Etapa A2):} O vetor $h[k]$ projetado é inspecionado na ferramenta \textit{Filter Designer} e confrontado com um filtro FIR ótimo no sentido minimax (algoritmo de Parks-McClellan / Remez) de ordem mínima para a mesma máscara, quantificando a economia de operações de multiplicação-acumulação (MAC).
+
+    \item \textbf{Filtragem Amostra a Amostra com Buffer Circular (Etapa B):} Implementa-se a convolução discreta $y[n] = \sum_{k=1}^{N} h[k]\,x[n-k+1]$ operando diretamente sobre um anel de memória estático de tamanho $N$, gerenciado por um ponteiro de escrita anti-horário (\texttt{idx\_recente}) e um índice auxiliar de leitura horário (\texttt{idx\_leitura}), validando a saída contra \texttt{filter(h,1,x)} e os ganhos em regime permanente via \texttt{freqz}.
+
+    \item \textbf{Quantização Isolada de Coeficientes e de Amostras (Etapas C e D):} Na Etapa~C, os coeficientes normalizados são arredondados para os formatos de ponto fixo com sinal \texttt{Q1.15} ($F=15\text{ bits fracionários}$) e \texttt{Q1.7} ($F=7\text{ bits fracionários}$) segundo $h_Q[k] = \text{round}(h[k]\cdot 2^F)/2^F$, sem renormalização posterior e mantendo sinais e aritmética em ponto flutuante (\texttt{double}). Na Etapa~D, mantêm-se os coeficientes originais em \texttt{double} e quantizam-se os sinais de entrada em \texttt{Q1.7} com saturação estrita ao intervalo $[-1,\, 1 - 2^{-7}]$, avaliando a relação sinal-ruído ($\text{SNR}$) de entrada e saída após a exclusão rigorosa do transitório inicial.
+
+    \item \textbf{Análise de Precisão Aritmética e Overflow (Etapa E):} Avalia-se analítica e numericamente o produto de operandos \texttt{Q1.7} em precisão estendida \texttt{Q2.14}, o impacto do arredondamento versus truncamento em complemento de dois, o crescimento de palavra no acumulador MAC via norma $\ell_1$ ($\sum |h[k]|$) e a diferença entre saturação e retorno circular (\textit{wrap-around}).
+\end{enumerate}
+
+% ==============================================================================
+% 3. ETAPA A — PROJETO POR JANELAMENTO
+% ==============================================================================
+\section{Etapa A — Projeto por Janelamento (Série de Fourier + Hamming)}
+
+\subsection{Estimativa Inicial de Ordem e Varredura Experimental de Comprimentos}
+
+A partir das bordas especificadas na Tabela~\ref{tab:especificacoes}, obtêm-se a largura da banda de transição em frequência contínua ($\Delta f$) e sua correspondente largura angular discreta normalizada ($\Delta\omega$):
+\begin{equation}
+    \Delta f = F_{\text{stop}} - F_{\text{pass}} = 2200 - 1000 = \SI{1200}{Hz}, \qquad
+    \Delta\omega = \frac{2\pi\,\Delta f}{F_s} = \frac{2\pi \cdot 1200}{8000} = 0,3\pi \approx \SI{0,942478}{rad/amostra}.
+\end{equation}
+Para a janela de Hamming, cuja atenuação teórica do primeiro lóbulo lateral é de aproximadamente $\SI{41}{dB}$ a $\SI{43}{dB}$ (com atenuação assintótica na banda de rejeição da ordem de $\SI{53}{dB}$ para um filtro passa-baixa integrado), a literatura clássica relaciona a largura de transição normalizada $\Delta f / F_s = 1200 / 8000 = 0,15$ ao comprimento $N$ por meio da relação aproximada ensinada em aula:
+\begin{equation}
+    N_{\text{est}} = \left\lceil \frac{3,3}{\Delta f / F_s} \right\rceil = \left\lceil \frac{3,3}{0,15} \right\rceil = \lceil 22,0 \rceil = 22\text{ coeficientes (Ordem } M = 21\text{)},
+\end{equation}
+ou, adotando a variante conservadora de largura total do lóbulo principal ($\Delta\omega \approx 8\pi / N$):
+\begin{equation}
+    N_{\text{est,alt}} = \left\lceil \frac{4,0}{\Delta f / F_s} \right\rceil = \left\lceil \frac{4,0}{0,15} \right\rceil = \lceil 26,67 \rceil = 27\text{ coeficientes (Ordem } M = 26\text{)}.
+\end{equation}
+
+Conforme exigido pelo roteiro, realizou-se uma varredura sistemática sobre todos os comprimentos inteiros (pares e ímpares) no intervalo $N \in [15,\, 45]$, avaliando cada filtro sintetizado e normalizado por meio de \texttt{avaliar\_mascara.m}. A Tabela~\ref{tab:A1_varredura} apresenta os resultados detalhados da varredura para $N = 15$ a $31$ (observando-se que todos os comprimentos $N \in [32,\, 45]$ também satisfazem integralmente a máscara, com atenuação mínima alcançando $\SI{62,2523}{dB}$ em $N=40$).
+
+\begin{table}[H]
+    \centering
+    \caption{Varredura experimental de comprimentos pares e ímpares ($N = 15$ a $31$) pelo método da série de Fourier com janela de Hamming ($f_c = \SI{1600}{Hz}$, $F_s = \SI{8000}{Hz}$). Em destaque verde, o menor comprimento que satisfaz simultaneamente ambas as exigências da máscara ($N = 23$).}
+    \label{tab:A1_varredura}
+    \footnotesize
+    \setlength{\tabcolsep}{5pt}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{@{}cccSSccc@{}}
+        \toprule
+        \textbf{Compr.\ ($N$)} & \textbf{Ordem ($M$)} & \textbf{Paridade} & {\textbf{Desvio Pass.\ Máx.\ [\si{dB}]}} & {\textbf{Aten.\ Stop Mín.\ [\si{dB}]}} & \textbf{Atende Pass.?} & \textbf{Atende Stop?} & \textbf{Atende Máscara?} \\
+        \text{} & {($N-1$)} & \text{} & {($\le \SI{0,10}{dB}$)} & {($\ge \SI{45,00}{dB}$)} & \text{} & \text{} & \text{} \\
+        \midrule
+        15 & 14 & Ímpar & 0.615336 & 23.2696 & Não & Não & Não \\
+        16 & 15 & Par   & 0.472802 & 25.5998 & Não & Não & Não \\
+        17 & 16 & Ímpar & 0.359812 & 28.0554 & Não & Não & Não \\
+        18 & 17 & Par   & 0.264299 & 30.1168 & Não & Não & Não \\
+        19 & 18 & Ímpar & 0.179714 & 32.4023 & Não & Não & Não \\
+        20 & 19 & Par   & 0.109923 & 35.9892 & Não & Não & Não \\
+        \rowcolor{rowfail}
+        21 & 20 & Ímpar & 0.063688 & 40.6091 & Sim & \textbf{Não} & \textbf{Não} \\
+        \rowcolor{rowfail}
+        22 ($N_{\text{est}}$) & 21 & Par & 0.044035 & 44.0615 & Sim & \textbf{Não} & \textbf{Não} \\
+        \rowcolor{rowpass}
+        \textbf{23} & \textbf{22} & \textbf{Ímpar} & \textbf{0,042323} & \textbf{47,0065} & \textbf{Sim} & \textbf{Sim} & \textbf{Sim (Selecionado)} \\
+        24 & 23 & Par   & 0.046770 & 49.8082 & Sim & Sim & Sim \\
+        25 & 24 & Ímpar & 0.049449 & 50.1908 & Sim & Sim & Sim \\
+        26 & 25 & Par   & 0.034964 & 53.5795 & Sim & Sim & Sim \\
+        27 ($N_{\text{est,alt}}$) & 26 & Ímpar & 0.019279 & 53.0635 & Sim & Sim & Sim \\
+        28 & 27 & Par   & 0.037329 & 52.2583 & Sim & Sim & Sim \\
+        29 & 28 & Ímpar & 0.043283 & 50.7077 & Sim & Sim & Sim \\
+        30 & 29 & Par   & 0.044155 & 51.3627 & Sim & Sim & Sim \\
+        31 & 30 & Ímpar & 0.032945 & 56.8528 & Sim & Sim & Sim \\
+        \midrule
+        \multicolumn{8}{@{}p{0.94\textwidth}@{}}{\scriptsize \textit{Nota:} Para todos os comprimentos $N \in [32,\, 45]$ registrados em \texttt{results/tab\_A1\_varredura\_N.csv}, o filtro também atende integralmente à máscara ($\delta_{p,\text{máx}} \in [\SI{0,011246}{dB},\, \SI{0,039526}{dB}]$ e $A_{s,\text{mín}} \in [\SI{53,0889}{dB},\, \SI{62,2523}{dB}]$). O ganho DC é $\SI{0,000000}{dB}$ ($\le \num{5,79e-15}\text{ dB}$) em todos os casos.} \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+A Tabela~\ref{tab:A2_metricas} resume as propriedades estruturais e métricas de desempenho do filtro ótimo selecionado ($N = \MetricaAN$, salvo em \texttt{data/coeficientes\_FIR.mat}), enquanto as Figuras~\ref{fig:A1_impulso} e~\ref{fig:A2_magnitude} exibem, respectivamente, a decomposição no domínio do tempo discreto ($h_{\text{ideal}}[k]$, $w[k]$ e $h[k]$) e a resposta em magnitude com ampliações (\textit{zoom}) na banda passante e na banda de rejeição.
+
+\begin{table}[H]
+    \centering
+    \caption{Métricas consolidadas do filtro FIR passa-baixa selecionado na Etapa A ($N = 23$).}
+    \label{tab:A2_metricas}
+    \small
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{@{}lcc@{}}
+        \toprule
+        \textbf{Métrica / Propriedade do Filtro Selecionado} & \textbf{Valor Obtido} & \textbf{Unidade / Status} \\
+        \midrule
+        Número de coeficientes selecionado ($N$) & $\MetricaAN$ & coeficientes (Ímpar, Tipo I) \\
+        Ordem do polinômio de transferência ($M = N - 1$) & $\MetricaAOrdem$ & adimensional \\
+        Desvio máximo na banda passante ($\SI{0}{Hz}$ a $\SI{1000}{Hz}$) & $\MetricaADesvioPassdB$ & \si{dB} (Limite: $\le \SI{0,10}{dB}$ — \textbf{Aprovado}) \\
+        Atenuação mínima na banda de rejeição ($\SI{2200}{Hz}$ a $\SI{4000}{Hz}$) & $\MetricaAAtenStopdB$ & \si{dB} (Limite: $\ge \SI{45,00}{dB}$ — \textbf{Aprovado}) \\
+        Soma algébrica dos coeficientes ($\sum_{k=0}^{22} h[k]$) & $\MetricaASomaCoefs$ & adimensional \\
+        Ganho em corrente contínua ($20\log_{10}|H(e^{j0})|$) & $\MetricaAGanhoDCdB$ & \si{dB} \\
+        Erro máximo de simetria ($\max_k |h[k] - h[N-1-k]|$) & $\MetricaAErroSimetria$ & adimensional (Simetria exata) \\
+        Atraso de grupo constante ($\tau_g = (N-1)/2$) & $\MetricaAAtrasoAmostras$ & amostras \\
+        Atraso de grupo temporal ($\tau_{g,\text{ms}} = \tau_g / F_s \times 10^3$) & $\MetricaAAtrasoMs$ & \si{ms} \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\linewidth]{fig_A1_impulso_janela.pdf}
+    \caption{Etapa A: Resposta impulsiva ideal truncada e deslocada $h_{\text{ideal}}[k]$ centrada em $\alpha = 11$, janela de Hamming $w[k]$ de comprimento $N = 23$ e coeficientes finais normalizados $h[k]$.}
+    \label{fig:A1_impulso}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.96\linewidth]{fig_A2_magnitude_mascara.pdf}
+    \caption{Etapa A: Resposta em magnitude $|H(f)|_{\text{dB}}$ de $\SI{0}{Hz}$ a $\SI{4000}{Hz}$ para $N = 23$ comparada aos candidatos fronteiriços reprovados ($N = 21$ e $N = 22$), com ampliações (\textit{zoom}) na banda passante ($\pm\SI{0,10}{dB}$) e na banda de rejeição ($\le \SI{-45,00}{dB}$).}
+    \label{fig:A2_magnitude}
+\end{figure}
+
+\subsection{Análise Técnica e Interpretação dos Resultados (Etapa A)}
+
+\begin{itemize}[leftmargin=1.5em, itemsep=3pt]
+    \item \textbf{Por que a estimativa inicial não garante automaticamente o cumprimento da máscara (Distinção entre estimativa de ordem e verificação efetiva):} A expressão empírica $N \approx 3,3 / (\Delta f / F_s) = 22$ é derivada da largura aproximada de meia potência ou da distância entre os pontos de transição da convolução espectral entre o degrau ideal e o lóbulo principal da janela de Hamming ($\Delta\omega_{\text{lóbulo}} = 8\pi/N$). Entretanto, essa fórmula fechada não acopla simultaneamente os dois limiares exatos exigidos nas bordas da máscara ($\pm\SI{0,10}{dB}$ em $F_{\text{pass}} = \SI{1000}{Hz}$ e $\SI{-45,00}{dB}$ em $F_{\text{stop}} = \SI{2200}{Hz}$) para uma frequência de corte $f_c = \SI{1600}{Hz}$ fixa. Conforme comprova a Tabela~\ref{tab:A1_varredura} e o zoom inferior direito da Figura~\ref{fig:A2_magnitude}, a estimativa inicial $N = 22$ (bem como $N = 21$) já cumpre com folga a tolerância na banda passante ($\SI{0,044035}{dB} \le \SI{0,10}{dB}$), mas \textbf{reprova na borda de início da banda de rejeição} ($\SI{2200}{Hz}$), onde a curva de transição ainda está em $\SI{-44,0615}{dB}$ (faltando $\SI{0,9385}{dB}$ para atingir os $\SI{45,00}{dB}$ exigidos). Portanto, a fórmula analítica fornece apenas um ponto de partida na vizinhança correta, sendo indispensável a verificação efetiva da máscara sobre uma grade densa de frequências.
+
+    \item \textbf{Justificativa do comprimento selecionado ($N = 23$):} Ao incrementar o comprimento em apenas uma unidade acima da estimativa inicial ($N = 23$, ordem $M = 22$), o estreitamento do lóbulo principal da transformada da janela de Hamming acelera a queda na faixa de transição o suficiente para que a atenuação em $f = \SI{2200}{Hz}$ alcance $\SI{47,26}{dB}$, e a atenuação mínima em toda a banda $[\SI{2200}{Hz},\, \SI{4000}{Hz}]$ (determinada pelo pico do primeiro lóbulo lateral em torno de $\SI{2612}{Hz}$) atinja $\SI{47,0065}{dB} \ge \SI{45,00}{dB}$, concomitantemente a um desvio máximo na passante de apenas $\SI{0,042323}{dB} \le \SI{0,10}{dB}$. Como todos os comprimentos $N \le 22$ falham na rejeição e qualquer $N \ge 24$ elevaria desnecessariamente o custo computacional e a latência do sistema, $N = 23$ é rigorosamente o menor comprimento viável para este método.
+
+    \item \textbf{Função da normalização \texttt{h = h / sum(h)}:} Pela definição da transformada de Fourier de tempo discreto (DTFT), $H(e^{j\omega}) = \sum_{k=0}^{N-1} h[k]\,e^{-j\omega k}$. Avaliando em frequência nula ($\omega = 0$, componente DC), tem-se $H(e^{j0}) = \sum_{k=0}^{N-1} h[k]$. Embora a integral contínua da função $\text{sinc}$ da Equação~\eqref{eq:hideal} possua área unitária, a amostragem discreta finita ponderada pela janela $w[k]$ produz uma soma bruta $\sum h_{\text{win}}[k]$ ligeiramente diferente de $1$. A normalização explícita da Equação~\eqref{eq:hnorm} impõe $\sum_{k=0}^{22} h[k] = 1,0000000000$, cravando o ganho DC exatamente em $\SI{0,000000}{dB}$ e centralizando a oscilação da banda passante de maneira simétrica dentro do corredor de tolerância $[\SI{-0,10}{dB},\, \SI{+0,10}{dB}]$.
+
+    \item \textbf{Relação entre simetria e fase linear:} Tanto a resposta impulsiva ideal deslocada $h_{\text{ideal}}[n]$ quanto a janela de Hamming $w[n]$ possuem simetria par exata em torno do centro $\alpha = (N-1)/2 = 11$, o que resulta em $h[k] = h[N-1-k]$ para todo $k \in \{0, \dots, 22\}$ (erro máximo de simetria nulo: $\num{0,0000e+00}$). Essa propriedade caracteriza um filtro FIR Tipo~I ($N$ ímpar, simetria par), cuja resposta em frequência pode ser fatorada analiticamente como:
+    \begin{equation}
+        H(e^{j\omega}) = e^{-j\omega \frac{N-1}{2}} \underbrace{\left( h[\alpha] + 2 \sum_{k=0}^{\alpha - 1} h[k] \cos\!\big(\omega (\alpha - k)\big) \right)}_{A(\omega) \in \mathbb{R}}.
+    \end{equation}
+    Como a função de amplitude $A(\omega)$ é puramente real, a fase contínua na banda passante é estritamente linear, $\angle H(e^{j\omega}) = -\alpha\omega = -11\omega$, resultando em um atraso de grupo constante em todas as frequências igual a $\tau_g(\omega) = -\frac{\mathrm{d}}{\mathrm{d}\omega}\angle H(e^{j\omega}) = \alpha = \SI{11,0}{amostras}$ ($\tau_{g,\text{ms}} = 11 / 8000 = \SI{1,3750}{ms}$), eliminando qualquer distorção de fase entre as componentes espectrais do sinal filtrado.
+\end{itemize}
+
+% ==============================================================================
+% 4. ETAPA A2 — FILTER DESIGNER COMO FERRAMENTA AUXILIAR
+% ==============================================================================
+\section{Etapa A2 — Filter Designer como Ferramenta Auxiliar (Janelamento vs.\ Equiripple)}
+
+Os coeficientes $h[k]$ do filtro de janelamento ($N = 23$) foram importados na ferramenta interativa \textit{Filter Designer} do MATLAB ($F_s = \SI{8000}{Hz}$), confirmando visual e numericamente a resposta em magnitude, a linearidade de fase na banda passante, o patamar constante de atraso de grupo em $\SI{11,0}{amostras}$ e a distribuição dos $22$ zeros no plano-$z$ (pares recíprocos reais/complexos fora do círculo unitário na banda passante e zeros sobre o círculo unitário de raio $|z|=1$ na banda de rejeição).
+
+Em seguida, projetou-se no \textit{Filter Designer} um segundo filtro FIR passa-baixa de \textbf{ordem mínima} empregando o método \textbf{Equiripple} (algoritmo de otimização minimax de Parks-McClellan / Remez) submetido exatamente à mesma máscara ($F_{\text{pass}} = \SI{1000}{Hz}$, $F_{\text{stop}} = \SI{2200}{Hz}$, desvio máximo de $\pm\SI{0,10}{dB}$ em relação a $\SI{0}{dB}$ e atenuação mínima de $\SI{45,00}{dB}$). Os coeficientes exportados (\texttt{data/coeficientes\_equiripple.mat}) foram avaliados pela mesma rotina \texttt{avaliar\_mascara.m}, mantendo-se contudo o filtro de janelamento $h[k]$ ($N=23$) inalterado para todas as etapas subsequentes (B a E). A Tabela~\ref{tab:A2_equiripple} e a Figura~\ref{fig:A2_comp_eq} sintetizam a comparação direta entre os dois projetos.
+
+\begin{table}[H]
+    \centering
+    \caption{Comparação de desempenho e custo computacional entre o filtro projetado por Janelamento (Hamming) e o filtro ótimo Equiripple de ordem mínima (\textit{Filter Designer}).}
+    \label{tab:A2_equiripple}
+    \small
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{@{}lcc@{}}
+        \toprule
+        \textbf{Resultado / Métrica Comparativa} & \textbf{Janelamento (Hamming)} & \textbf{Equiripple (Parks-McClellan)} \\
+        \midrule
+        \textbf{Número de coeficientes ($N$)} & $\mathbf{\MetricaAN}$ & $\mathbf{\MetricaAIIEqN}$ \\
+        Ordem do filtro ($M = N - 1$) & $\MetricaAOrdem$ & $\MetricaAIIEqOrdem$ \\
+        \textbf{Desvio máximo na passante [\si{dB}]} ($\le \SI{0,10}{dB}$) & $\mathbf{\MetricaADesvioPassdB}$ & $\mathbf{\MetricaAIIEqDesvioPassdB}$ \\
+        \textbf{Atenuação mínima na rejeição [\si{dB}]} ($\ge \SI{45,00}{dB}$) & $\mathbf{\MetricaAAtenStopdB}$ & $\mathbf{\MetricaAIIEqAtenStopdB}$ \\
+        \textbf{Atende à máscara?} & \textbf{Sim} & \textbf{Sim} \\
+        \midrule
+        Ganho DC [\si{dB}] ($\sum h[k]$) & $\MetricaAGanhoDCdB\text{ dB}$ ($1,000000$) & $\MetricaAIIEqGanhoDCdB\text{ dB}$ ($\MetricaAIIEqSomaCoefs$) \\
+        Atraso de grupo constante ($\tau_g$) & $\MetricaAAtrasoAmostras\text{ amostras}$ ($\SI{1,3750}{ms}$) & $\MetricaAIIEqAtrasoAmostras\text{ amostras}$ ($\SI{0,8750}{ms}$) \\
+        Operações por amostra de saída (MACs/amostra) & $23\text{ mult.} + 22\text{ somas}$ & $15\text{ mult.} + 14\text{ somas}$ \\
+        Taxa de processamento em tempo real ($F_s = \SI{8000}{Hz}$) & $\SI{184000}{MACs/s}$ & $\SI{120000}{MACs/s}$ ($\mathbf{-34,78\%}$) \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.96\linewidth]{fig_A2_comp_janelamento_equiripple.pdf}
+    \caption{Etapa A2: Comparação das respostas em magnitude entre o filtro por Janelamento de Hamming ($N = 23$, azul contínuo) e o filtro Equiripple de ordem mínima ($N = 15$, laranja tracejado), incluindo ampliações na banda passante e na banda de rejeição.}
+    \label{fig:A2_comp_eq}
+\end{figure}
+
+\subsection{Discussão: Número de Coeficientes, Método de Projeto e Custo Computacional}
+
+A comparação evidenciada na Figura~\ref{fig:A2_comp_eq} e na Tabela~\ref{tab:A2_equiripple} ilustra o compromisso fundamental entre simplicidade analítica de projeto e eficiência computacional em tempo de execução:
+
+\begin{enumerate}[leftmargin=1.5em, itemsep=2pt]
+    \item \textbf{Distribuição espectral do erro de aproximação:} No método de janelamento (Hamming), a multiplicação no tempo por $w[n]$ equivale à convolução periódica no domínio da frequência entre a resposta retangular ideal e o espectro da janela. Em consequência, o erro de aproximação concentra-se fortemente nas vizinhanças da banda de transição ($F_{\text{pass}} = \SI{1000}{Hz}$ e $F_{\text{stop}} = \SI{2200}{Hz}$) e decai rapidamente à medida que a frequência se afasta da transição: na banda passante, o filtro permanece muito próximo de $\SI{0}{dB}$ de $\SI{0}{Hz}$ até $\SI{600}{Hz}$ (atingindo $\SI{0,042323}{dB}$ apenas perto de $\SI{1000}{Hz}$), enquanto na rejeição os lóbulos laterais caem de $\SI{-47,01}{dB}$ para mais de $\SI{-60}{dB}$ perto de $\SI{4000}{Hz}$. Isto significa que o filtro por janelamento é \textit{superdimensionado} no interior das bandas para conseguir satisfazer a máscara nas bordas. Em contrapartida, o algoritmo de Parks-McClellan (\textit{Equiripple}) baseia-se no Teorema da Alternância de Chebyshev para minimizar a norma $\ell_\infty$ do erro ponderado em todo o domínio especificado, distribuindo as oscilações (\textit{ripples}) de maneira uniforme ao longo de toda a banda passante (picos constantes de $\pm\SI{0,083846}{dB} \le \SI{0,10}{dB}$, inclusive em DC onde vale $\SI{+0,082627}{dB}$) e de toda a banda de rejeição (cristas niveladas em $\SI{-46,5690}{dB} \le \SI{-45,00}{dB}$).
+
+    \item \textbf{Impacto direto no custo computacional e na latência:} Por aproveitar integralmente a margem de tolerância permitida pela máscara em todas as frequências, o filtro \textit{Equiripple} cumpre a mesma especificação com apenas $N_{\text{eq}} = 15$ coeficientes (ordem $M_{\text{eq}} = 14$), contra $N = 23$ coeficientes (ordem $M = 22$) do janelamento de Hamming. Em uma implementação em forma direta ou via buffer circular, cada amostra de saída requer $N$ multiplicações e $N-1$ adições ($N$ instruções MAC em um processador digital de sinais --- DSP). Assim, o projeto \textit{Equiripple} proporciona uma \textbf{redução de $\mathbf{34,78\%}$ no esforço computacional} (de $\SI{184000}{MACs/s}$ para $\SI{120000}{MACs/s}$ a $F_s = \SI{8000}{Hz}$) e no consumo de memória RAM do buffer de amostras, além de reduzir o atraso de grupo de $\SI{11,0}{amostras}$ ($\SI{1,3750}{ms}$) para $\SI{7,0}{amostras}$ ($\SI{0,8750}{ms}$, redução de $36,36\%$ na latência de transporte).
+\end{enumerate}
+
+% ==============================================================================
+% 5. ETAPA B — IMPLEMENTAÇÃO COM BUFFER CIRCULAR
+% ==============================================================================
+\section{Etapa B — Implementação com Buffer Circular (\texttt{fir\_circular})}
+
+\subsection{Código Essencial e Arquitetura de Ponteiros do Buffer Circular}
+
+Para realizar a filtragem FIR em tempo real amostra a amostra sem recorrer a funções prontas (\texttt{filter}, \texttt{conv} ou \texttt{fftfilt}) e sem deslocar fisicamente os dados na memória a cada período de amostragem, implementou-se a função \texttt{fir\_circular(x, h)} (\texttt{src/fir\_circular.m}). A Listagem~\ref{lst:fir_circular} apresenta o núcleo algorítmico da função, seguindo estritamente a convenção de ponteiros estudada em aula, ilustrada geometricamente no esquema vetorial da Figura~\ref{fig:tikz_buffer}.
+
+\begin{lstlisting}[style=matlabstyle, caption={Trecho essencial de \texttt{src/fir\_circular.m}: atualização anti-horária do ponteiro de escrita (\texttt{idx\_recente}) e laço interno de leitura horária com índice auxiliar separado (\texttt{idx\_leitura}).}, label={lst:fir_circular}]
+buf = zeros(1, N);             % Buffer circular de N = 23 posicoes em repouso [amplitude]
+y_lin = zeros(1, num_amostras);% Pre-alocacao do vetor de saida [amplitude]
+idx_recente = 1;               % Ponteiro para a amostra mais recente no buffer (1..N) [indice]
+
+for n = 1:num_amostras
+    % 1. Escrita da nova amostra: avanca 1 posicao no sentido anti-horario
+    %    (sobrescreve exatamente a amostra mais antiga que deixa a janela de ordem M)
+    idx_recente = idx_recente - 1;
+    if idx_recente < 1
+        idx_recente = N;       % Retorno circular ao final do anel (wrap-around)
+    end
+    buf(idx_recente) = x_lin(n);
+
+    % 2. Leitura e convolucao MAC: percorre o buffer no sentido horario a partir
+    %    de idx_recente usando um indice auxiliar separado (idx_leitura)
+    idx_leitura = idx_recente;
+    acumulador  = 0.0;
+    for k = 1:N
+        acumulador = acumulador + h_lin(k) * buf(idx_leitura);
+        idx_leitura = idx_leitura + 1;
+        if idx_leitura > N
+            idx_leitura = 1;   % Retorno circular ao inicio do anel (wrap-around)
+        end
+    end
+    y_lin(n) = acumulador;     % Amostra filtrada y[n] [amplitude]
+end
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    % Diagrama TikZ autocontido do Buffer Circular FIR (incorporado de results/tikz_buffer_circular.tex)
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tikzpicture}[>=stealth, font=\small, scale=0.95]
+        % Anéis de referência do buffer circular
+        \draw[thick, fill=gray!5] (0,0) circle (2.8cm);
+        \draw[thick, fill=white]  (0,0) circle (1.55cm);
+
+        % Divisões radiais das 8 células ilustrativas (representando 1..N)
+        \foreach \ang in {22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5} {
+            \draw[thick, gray!70] (\ang:1.55cm) -- (\ang:2.8cm);
+        }
+
+        % Destaque colorido para a célula atual de idx_recente (posição 1 no topo, 90 graus)
+        \fill[blue!15] (67.5:1.55cm) arc (67.5:112.5:1.55cm) -- (112.5:2.8cm) arc (112.5:67.5:2.8cm) -- cycle;
+        \draw[thick, blue!70!black] (67.5:1.55cm) arc (67.5:112.5:1.55cm) -- (112.5:2.8cm) arc (112.5:67.5:2.8cm) -- cycle;
+
+        % Destaque suave para a célula mais antiga (posição N à esquerda do topo, 135 graus),
+        % que será sobrescrita no próximo passo anti-horário
+        \fill[red!10] (112.5:1.55cm) arc (112.5:157.5:1.55cm) -- (157.5:2.8cm) arc (157.5:112.5:2.8cm) -- cycle;
+        \draw[thick, red!60!black] (112.5:1.55cm) arc (112.5:157.5:1.55cm) -- (157.5:2.8cm) arc (157.5:112.5:2.8cm) -- cycle;
+
+        % Numeração das posições no sentido horário (1, 2, 3, 4, 5, ..., N-1, N)
+        \node[font=\scriptsize\bfseries, blue!80!black] at (90:3.08cm)  {Pos.\ $1$};
+        \node[font=\scriptsize\bfseries, gray!80!black] at (45:3.08cm)  {Pos.\ $2$};
+        \node[font=\scriptsize\bfseries, gray!80!black] at (0:3.12cm)   {Pos.\ $3$};
+        \node[font=\scriptsize\bfseries, gray!80!black] at (-45:3.12cm) {Pos.\ $4$};
+        \node[font=\scriptsize\bfseries, gray!80!black] at (-90:3.08cm) {Pos.\ $5$};
+        \node[font=\scriptsize\bfseries, gray!80!black] at (-135:3.15cm){$\cdots$};
+        \node[font=\scriptsize\bfseries, gray!80!black] at (180:3.25cm) {Pos.\ $N\!-\!1$};
+        \node[font=\scriptsize\bfseries, red!75!black]  at (135:3.15cm) {Pos.\ $N$};
+
+        % Conteúdo das amostras armazenadas e coeficientes associados na leitura horária
+        \node[align=center, font=\scriptsize] at (90:2.18cm)   {$\mathbf{x[n]}$\\[-1pt]{\tiny $\times h[1]$}};
+        \node[align=center, font=\scriptsize] at (45:2.18cm)   {$x[n\!-\!1]$\\[-1pt]{\tiny $\times h[2]$}};
+        \node[align=center, font=\scriptsize] at (0:2.18cm)    {$x[n\!-\!2]$\\[-1pt]{\tiny $\times h[3]$}};
+        \node[align=center, font=\scriptsize] at (-45:2.18cm)  {$x[n\!-\!3]$\\[-1pt]{\tiny $\times h[4]$}};
+        \node[align=center, font=\scriptsize] at (-90:2.18cm)  {$x[n\!-\!4]$\\[-1pt]{\tiny $\times h[5]$}};
+        \node[align=center, font=\scriptsize] at (-135:2.18cm) {$\ddots$};
+        \node[align=center, font=\scriptsize] at (180:2.18cm)  {$x[n\!-\!N\!+\!2]$\\[-1pt]{\tiny $\times h[N\!-\!1]$}};
+        \node[align=center, font=\scriptsize] at (135:2.18cm)  {$x[n\!-\!N\!+\!1]$\\[-1pt]{\tiny $\times h[N]$}};
+
+        % Ponteiro da amostra mais recente (idx_recente)
+        \draw[->, ultra thick, blue!80!black] (90:4.15cm) -- (90:3.35cm);
+        \node[above, align=center, font=\footnotesize\bfseries, blue!80!black] at (90:4.15cm)
+            {\texttt{idx\_recente}\\{\scriptsize (amostra mais recente $x[n]$)}};
+
+        % Seta anti-horária de escrita (próxima posição de escrita)
+        \draw[->, very thick, red!75!black, dashed] (100:3.65cm) arc (100:142:3.65cm);
+        \node[above left, align=right, font=\scriptsize\bfseries, red!75!black] at (132:3.75cm)
+            {Próxima escrita (sentido anti-horário)\\{\tiny \texttt{idx\_recente = idx\_recente - 1}}\\[-2pt]{\tiny (sobrescreve a amostra mais antiga $x[n\!-\!N\!+\!1]$)}};
+
+        % Seta horária de leitura (idx_leitura) na parte externa direita
+        \draw[->, very thick, green!50!black] (80:3.65cm) arc (80:-35:3.65cm);
+        \node[above right, align=left, font=\scriptsize\bfseries, green!45!black] at (35:3.75cm)
+            {Leitura e acumulação MAC (sentido horário)\\{\tiny \texttt{idx\_leitura} parte de \texttt{idx\_recente} ($k = 1 \dots N$)}\\[-2pt]{\tiny \texttt{idx\_leitura = idx\_leitura + 1} (com retorno circular)}};
+
+        % Texto central do anel
+        \node[align=center, font=\scriptsize] at (0,0)
+            {\textbf{Buffer Circular}\\\textbf{de tamanho $N = 23$}\\[3pt]Numeração horária\\$1 \rightarrow 2 \rightarrow \cdots \rightarrow N$\\[2pt]$y[n] = \sum_{k=1}^{N} h[k]\,\text{buf}(\text{idx\_leitura})$};
+    \end{tikzpicture}
+    \end{adjustbox}
+    \caption{Etapa B: Esquema do buffer circular de $N = 23$ posições numeradas no sentido horário ($1 \dots N$), destacando o ponteiro da amostra mais recente (\texttt{idx\_recente}, em azul), o avanço anti-horário de escrita que sobrescreve a amostra mais antiga $x[n-N+1]$ (em vermelho tracejado) e o percurso horário do índice auxiliar de leitura (\texttt{idx\_leitura}, em verde) durante a soma de convolução.}
+    \label{fig:tikz_buffer}
+\end{figure}
+
+\subsection{Resultados de Validação Temporal e Espectral}
+
+A validação funcional de \texttt{fir\_circular(x, h)} foi executada em dois cenários de teste (\texttt{src/etapa\_B\_validacao.m}), confrontando sua saída amostra a amostra com a função nativa \texttt{filter(h, 1, x)}:
+\begin{enumerate}[leftmargin=1.5em, itemsep=2pt]
+    \item \textbf{Teste 1 — Resposta ao Impulso Unitário:} Aplicou-se $\delta[n] = [1,\, 0,\, \dots,\, 0]$ com $L_{\text{imp}} = N + 20 = 43\text{ amostras}$ ($n = 0 \dots 42$). Conforme mostra a Figura~\ref{fig:B1_impulso}, a saída $y_{\text{circ}}[n]$ recupera com erro exatamente nulo ($\num{0,000000e+00}$) os $N = 23$ coeficientes de $h[k]$ nos instantes $n = 0 \dots 22$ e permanece identicamente igual a zero na cauda $n \ge 23$, comprovando a ausência de vazamento de índice ou erro de retorno circular (\textit{off-by-one}).
+    \item \textbf{Teste 2 — Sinal Composto de Duas Senoides:} Aplicou-se $x[n] = \sin(2\pi \cdot 500n/F_s) + \sin(2\pi \cdot 3000n/F_s)$ durante $L_{\text{sen}} = 400\text{ amostras}$ ($\SI{50}{ms}$). A Figura~\ref{fig:B2_senoides} evidencia que, após o transitório inicial de $M = N - 1 = 22\text{ amostras}$ ($\SI{2,75}{ms}$, correspondente ao preenchimento completo do buffer circular), a componente de alta frequência em $f_2 = \SI{3000}{Hz}$ (banda de rejeição) é suprimida, restando na saída uma senoide pura de $f_1 = \SI{500}{Hz}$ (banda passante) com amplitude preservada e deslocada no tempo exatamente pelo atraso de grupo $\tau_g = \SI{11,0}{amostras}$ ($\SI{1,3750}{ms}$). O erro absoluto máximo entre \texttt{fir\_circular} e \texttt{filter} ao longo das $400\text{ amostras}$ é de $\MetricaBErroMaxSenFilter$ ($1,5\,\epsilon_{\text{mach}}$ em precisão \texttt{double} IEEE~754).
+\end{enumerate}
+
+A Tabela~\ref{tab:B1_validacao} sintetiza os erros máximos de validação temporal e os ganhos exatos em frequência calculados via \texttt{freqz(h, 1, [500, 3000], Fs)} confrontados com os requisitos da máscara.
+
+\begin{table}[H]
+    \centering
+    \caption{Métricas de validação temporal de \texttt{fir\_circular(x, h)} frente a \texttt{filter(h, 1, x)} e verificação dos ganhos espectrais via \texttt{freqz} em $f_1 = \SI{500}{Hz}$ e $f_2 = \SI{3000}{Hz}$.}
+    \label{tab:B1_validacao}
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{@{}lccc@{}}
+        \toprule
+        \multicolumn{4}{@{}l}{\textbf{Parte 1 — Validação Temporal Amostra a Amostra (\texttt{fir\_circular} vs.\ \texttt{filter})}} \\
+        \midrule
+        \textbf{Cenário de Teste} & \textbf{Comprimento ($L$)} & \textbf{Erro Absoluto Máximo} & \textbf{Veredito Algorítmico} \\
+        \midrule
+        Impulso unitário ($\delta[n]$ vs.\ \texttt{filter(h,1,delta)}) & $43\text{ amostras}$ & $\num{0,000000e+00}$ & Equivalência exata \\
+        Impulso unitário ($y_{\text{circ}}[0..22]$ vs.\ $h[0..22]$) & $23\text{ amostras}$ & $\num{0,000000e+00}$ & Recupera $h[k]$ sem erro \\
+        Cauda nula pós-impulso ($n = 23 \dots 42$) & $20\text{ amostras}$ & $\num{0,000000e+00}$ & Repouso exato após $N$ amostras \\
+        Duas senoides ($\SI{500}{Hz} + \SI{3000}{Hz}$ vs.\ \texttt{filter}) & $400\text{ amostras}$ & $\num{3,330669e-16}$ & Precisão de máquina (\texttt{double}) \\
+        \midrule
+        \multicolumn{4}{@{}l}{\textbf{Parte 2 — Ganhos Espectrais Exatos via \texttt{freqz} e Confronto com a Máscara}} \\
+        \midrule
+        \textbf{Frequência Avaliada} & \textbf{Ganho Linear $|H(f)|$} & \textbf{Ganho / Atenuação [\si{dB}]} & \textbf{Exigência da Máscara} \\
+        \midrule
+        $f_1 = \SI{500}{Hz}$ (Banda Passante) & $\MetricaBGanhoPassLin$ & $\MetricaBGanhoPassdB\text{ dB}$ (Desvio: $\SI{0,018814}{dB}$) & $|\text{Ganho}| \le \SI{0,10}{dB}$ (\textbf{Atende}) \\
+        $f_2 = \SI{3000}{Hz}$ (Banda de Rejeição) & $\MetricaBGanhoStopLin$ & $\MetricaBGanhoStopdB\text{ dB}$ (Aten.: $\SI{52,5783}{dB}$) & Atenuação $\ge \SI{45,00}{dB}$ (\textbf{Atende}) \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\linewidth]{fig_B1_impulso_comparacao.pdf}
+    \caption{Etapa B: Resposta ao impulso unitário obtida com \texttt{fir\_circular(delta, h)} comparada com os coeficientes $h[k]$ e com \texttt{filter(h, 1, delta)} ($L = 43$ amostras), exibindo erro nulo em toda a janela.}
+    \label{fig:B1_impulso}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{fig_B2_senoides_temporal.pdf}
+    \caption{Etapa B: Filtragem temporal do sinal composto $x[n] = \sin(2\pi\cdot 500n/F_s) + \sin(2\pi\cdot 3000n/F_s)$, destacando a extinção do transitório após $n = 22$ ($\SI{2,75}{ms}$), a supressão da senoide de $\SI{3000}{Hz}$, o atraso de grupo $\tau_g = \SI{11}{amostras}$ ($\SI{1,375}{ms}$) em relação à componente ideal de $\SI{500}{Hz}$ e o resíduo numérico de ordem $10^{-16}$ frente a \texttt{filter}.}
+    \label{fig:B2_senoides}
+\end{figure}
+
+\subsection{Análise Técnica e Interpretação (Etapa B)}
+
+\begin{itemize}[leftmargin=1.5em, itemsep=3pt]
+    \item \textbf{Por que os dados não precisam ser deslocados fisicamente na memória:} Em uma implementação ingênua de linha de atraso linear (\textit{shift register}), a chegada de uma nova amostra $x[n]$ exigiria copiar os $N-1$ elementos anteriores uma posição adiante ($\text{buf}[k] \leftarrow \text{buf}[k-1]$ para $k = N, \dots, 2$), demandando $N-1$ operações de leitura e escrita em memória de dados a cada amostra ($O(N)$ movimentações de memória). Na estrutura de buffer circular, \textbf{as amostras permanecem estáticas nos endereços físicos em que foram gravadas} até expirarem sua vida útil de $N$ períodos: apenas o ponteiro inteiro \texttt{idx\_recente} é decrementado com retorno circular ($O(1)$ de atualização de endereço), sobrescrevendo diretamente a célula que continha $x[n-N]$ (a amostra que acabou de sair da janela de memória do filtro de ordem $M = N-1$).
+
+    \item \textbf{Como cada coeficiente $h[k]$ é associado matematicamente à amostra correta $x[n-k+1]$:} Como as células do buffer são numeradas de $1$ a $N$ no sentido horário e o ponteiro de escrita \texttt{idx\_recente} recua uma posição no sentido \textbf{anti-horário} a cada instante discreto $n$, a amostra gravada no instante imediatamente anterior ($x[n-1]$) encontra-se sempre localizada uma posição à frente no sentido \textbf{horário} em relação a \texttt{idx\_recente}; de modo geral, a amostra com atraso de $k-1$ períodos ($x[n-k+1]$) ocupa a posição horária $\big((\text{\texttt{idx\_recente}} - 1 + (k - 1)) \bmod N\big) + 1$. Portanto, ao inicializar o índice auxiliar separado $\text{\texttt{idx\_leitura}} = \text{\texttt{idx\_recente}}$ para $k = 1$ e incrementá-lo no sentido horário ($\text{\texttt{idx\_leitura}} \leftarrow \text{\texttt{idx\_leitura}} + 1$ com retorno de $N+1 \to 1$) a cada passo do laço interno $k = 1, 2, \dots, N$, garante-se que na iteração $k$ o elemento lido seja exatamente $\text{buf}(\text{\texttt{idx\_leitura}}) = x[n-k+1]$, o qual é multiplicado por $h[k]$, realizando fielmente a soma de convolução $\sum_{k=1}^{N} h[k]\,x[n-k+1]$.
+
+    \item \textbf{Por que a comparação com \texttt{filter(h,1,x)} valida a implementação algorítmica, mas não substitui a verificação da máscara:} A função nativa \texttt{filter(h, 1, x)} resolve a equação a diferenças linear de coeficientes constantes para \textit{qualquer} vetor arbitrário $h$ fornecido como entrada. Assim, obter erro nulo (ou da ordem de $10^{-16}$) entre \texttt{fir\_circular(x, h)} e \texttt{filter(h, 1, x)} prova rigorosamente a \textbf{correção funcional e algorítmica do mecanismo de buffer circular} (ausência de bugs de ponteiros, indexação ou acumulação para o vetor $h$ dado). Todavia, essa comparação temporal (mesmo quando testada em duas frequências pontuais como $\SI{500}{Hz}$ e $\SI{3000}{Hz}$) nada informa sobre o comportamento espectral do filtro nas demais frequências contínuas das bandas passante $[0,\, \SI{1000}{Hz}]$ e de rejeição $[\SI{2200}{Hz},\, \SI{4000}{Hz}]$ — em particular nas bordas críticas de transição onde ocorrem os picos de \textit{ripple} e onde $N=22$ havia falhado. Logo, a validação da máscara exige obrigatoriamente a inspeção densa da resposta em frequência $|H(e^{j\omega})|$ via \texttt{freqz} (\texttt{avaliar\_mascara.m}).
+\end{itemize}
+
+% ==============================================================================
+% 6. ETAPA C — QUANTIZAÇÃO DOS COEFICIENTES
+% ==============================================================================
+\section{Etapa C — Quantização dos Coeficientes (\texttt{Q1.15} e \texttt{Q1.7})}
+
+Partindo dos coeficientes originais normalizados $h[k]$ em precisão dupla (\texttt{double}), realizou-se a quantização uniforme por arredondamento ao nível representável mais próximo nos formatos de ponto fixo com sinal \texttt{Q1.15} ($16\text{ bits}$ totais, $F = 15\text{ bits fracionários}$, passo $\Delta_{15} = 2^{-15} \approx \num{3,051758e-5}$) e \texttt{Q1.7} ($8\text{ bits}$ totais, $F = 7\text{ bits fracionários}$, passo $\Delta_7 = 2^{-7} = \num{0,0078125}$):
+\begin{equation}
+    h_Q[k] = \frac{\text{round}\!\left(h[k] \cdot 2^F\right)}{2^F}, \qquad e_Q[k] = h_Q[k] - h[k], \qquad F \in \{7,\, 15\},
+\end{equation}
+mantendo-se as entradas e operações aritméticas em ponto flutuante e \textbf{sem renormalizar} $h_Q[k]$ após a quantização. A Tabela~\ref{tab:C1_coeficientes} lista os $N = 23$ coeficientes originais, os valores quantizados e os respectivos erros individuais para ambas as resoluções. A Tabela~\ref{tab:C2_metricas} consolida as métricas estatísticas de erro e o desempenho espectral nas duas bandas, ilustrado graficamente na Figura~\ref{fig:C1_quant_coef}.
+
+\begin{table}[H]
+    \centering
+    \caption{Coeficientes originais $h[k]$ ($N = 23$) e versões quantizadas em \texttt{Q1.7} ($\Delta = 2^{-7}$) e \texttt{Q1.15} ($\Delta = 2^{-15}$) com seus respectivos erros individuais $e_Q[k] = h_Q[k] - h[k]$ (\texttt{results/tab\_C1\_coeficientes\_erros.csv}).}
+    \label{tab:C1_coeficientes}
+    \footnotesize
+    \setlength{\tabcolsep}{5pt}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{@{}crrrrr@{}}
+        \toprule
+        \textbf{Índice ($k$)} & \multicolumn{1}{c}{\textbf{$h[k]$ (\texttt{double})}} & \multicolumn{1}{c}{\textbf{$h_{\text{Q1.7}}[k]$}} & \multicolumn{1}{c}{\textbf{Erro $e_{\text{Q1.7}}[k]$}} & \multicolumn{1}{c}{\textbf{$h_{\text{Q1.15}}[k]$}} & \multicolumn{1}{c}{\textbf{Erro $e_{\text{Q1.15}}[k]$}} \\
+        \midrule
+        \rowcolor{rowfail}
+        0  & $+0,00219838$ & $+0,00000000$ & $-2,198376\times 10^{-3}$ & $+0,00219727$ & $-1,110097\times 10^{-6}$ \\
+        1  & $-1,5357\times 10^{-18}$ & $0,00000000$ & $+1,535651\times 10^{-18}$ & $0,00000000$ & $+1,535651\times 10^{-18}$ \\
+        2  & $-0,00513949$ & $-0,00781250$ & $\mathbf{-2,673012\times 10^{-3}}$ & $-0,00512695$ & $+1,253520\times 10^{-5}$ \\
+        3  & $-0,00557566$ & $-0,00781250$ & $-2,236844\times 10^{-3}$ & $-0,00558472$ & $-9,061077\times 10^{-6}$ \\
+        4  & $+0,00931175$ & $+0,00781250$ & $-1,499248\times 10^{-3}$ & $+0,00930786$ & $-3,886926\times 10^{-6}$ \\
+        5  & $+0,02390682$ & $+0,02343750$ & $-4,693181\times 10^{-4}$ & $+0,02389526$ & $-1,155439\times 10^{-5}$ \\
+        6  & $-9,4267\times 10^{-18}$ & $0,00000000$ & $+9,426665\times 10^{-18}$ & $0,00000000$ & $+9,426665\times 10^{-18}$ \\
+        7  & $-0,05524793$ & $-0,05468750$ & $+5,604296\times 10^{-4}$ & $-0,05523682$ & $+1,111321\times 10^{-5}$ \\
+        8  & $-0,05238580$ & $-0,05468750$ & $-2,301705\times 10^{-3}$ & $-0,05239868$ & $-1,288655\times 10^{-5}$ \\
+        9  & $+0,08658761$ & $+0,08593750$ & $-6,501124\times 10^{-4}$ & $+0,08657837$ & $-9,243257\times 10^{-6}$ \\
+        10 & $+0,29664427$ & $+0,29687500$ & $+2,307295\times 10^{-4}$ & $+0,29663086$ & $-1,341114\times 10^{-5}$ \\
+        \rowcolor{rowpass}
+        11 & $+0,39940009$ & $+0,39843750$ & $-9,625876\times 10^{-4}$ & $+0,39941406$ & $\mathbf{+1,397490\times 10^{-5}}$ \\
+        12 & $+0,29664427$ & $+0,29687500$ & $+2,307295\times 10^{-4}$ & $+0,29663086$ & $-1,341114\times 10^{-5}$ \\
+        13 & $+0,08658761$ & $+0,08593750$ & $-6,501124\times 10^{-4}$ & $+0,08657837$ & $-9,243257\times 10^{-6}$ \\
+        14 & $-0,05238580$ & $-0,05468750$ & $-2,301705\times 10^{-3}$ & $-0,05239868$ & $-1,288655\times 10^{-5}$ \\
+        15 & $-0,05524793$ & $-0,05468750$ & $+5,604296\times 10^{-4}$ & $-0,05523682$ & $+1,111321\times 10^{-5}$ \\
+        16 & $-9,4267\times 10^{-18}$ & $0,00000000$ & $+9,426665\times 10^{-18}$ & $0,00000000$ & $+9,426665\times 10^{-18}$ \\
+        17 & $+0,02390682$ & $+0,02343750$ & $-4,693181\times 10^{-4}$ & $+0,02389526$ & $-1,155439\times 10^{-5}$ \\
+        18 & $+0,00931175$ & $+0,00781250$ & $-1,499248\times 10^{-3}$ & $+0,00930786$ & $-3,886926\times 10^{-6}$ \\
+        19 & $-0,00557566$ & $-0,00781250$ & $-2,236844\times 10^{-3}$ & $-0,00558472$ & $-9,061077\times 10^{-6}$ \\
+        20 & $-0,00513949$ & $-0,00781250$ & $\mathbf{-2,673012\times 10^{-3}}$ & $-0,00512695$ & $+1,253520\times 10^{-5}$ \\
+        21 & $-1,5357\times 10^{-18}$ & $0,00000000$ & $+1,535651\times 10^{-18}$ & $0,00000000$ & $+1,535651\times 10^{-18}$ \\
+        \rowcolor{rowfail}
+        22 & $+0,00219838$ & $+0,00000000$ & $-2,198376\times 10^{-3}$ & $+0,00219727$ & $-1,110097\times 10^{-6}$ \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Métricas de erro de quantização de coeficientes e desempenho espectral para as três versões do filtro ($N = 23$).}
+    \label{tab:C2_metricas}
+    \small
+    \setlength{\tabcolsep}{5pt}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{@{}lccc@{}}
+        \toprule
+        \textbf{Métrica Avaliada} & \textbf{Original (\texttt{double})} & \textbf{Quantizado \texttt{Q1.15}} & \textbf{Quantizado \texttt{Q1.7}} \\
+        \midrule
+        Bits fracionários ($F$) / Passo ($\Delta = 2^{-F}$) & $53\text{ bits}$ ($\num{2,22e-16}$) & $15\text{ bits}$ ($\num{3,051758e-5}$) & $7\text{ bits}$ ($\num{7,812500e-3}$) \\
+        Limite teórico de arredondamento ($\Delta / 2$) & $\num{1,110223e-16}$ & $\num{1,525879e-5}$ & $\num{3,906250e-3}$ \\
+        \textbf{Erro absoluto máximo ($\max_k |e_Q[k]|$)} & $\num{0,000000e+00}$ & $\mathbf{\MetricaCErroMaxQXV}$ & $\mathbf{\MetricaCErroMaxQVII}$ \\
+        \textbf{Erro quadrático médio (EQM)} & $\num{0,000000e+00}$ & $\mathbf{\MetricaCEQMQXV}$ & $\mathbf{\MetricaCEQMQVII}$ \\
+        Número de coeficientes iguais a zero & $0$ ($4 \approx 10^{-18}$) & $4$ ($k \in \{1,6,16,21\}$) & $6$ ($k \in \{0,1,6,16,21,22\}$) \\
+        Erro máximo de simetria ($\max |h_Q[k]-h_Q[N-1-k]|$) & $\num{0,0000e+00}$ & $\num{0,0000e+00}$ & $\num{0,0000e+00}$ \\
+        \textbf{Soma dos coeficientes ($\sum_{k=0}^{22} h_Q[k]$)} & $1,00000000$ & $\MetricaCSomaQXV$ ($32766/32768$) & $\MetricaCSomaQVII$ ($125/128$) \\
+        \textbf{Ganho DC ($20\log_{10}|\sum h_Q[k]|$) [\si{dB}]} & $\SI{0,000000}{dB}$ & $\mathbf{\MetricaCGanhoDCQXVdB\text{ \textbf{dB}}}$ & $\mathbf{\MetricaCGanhoDCQVIIdB\text{ \textbf{dB}}}$ \\
+        \textbf{Desvio máximo na passante [\si{dB}]} ($\le \SI{0,10}{dB}$) & $\SI{0,042323}{dB}$ & $\mathbf{\MetricaCDesvioPassQXVdB\text{ \textbf{dB}}}$ & $\mathbf{\MetricaCDesvioPassQVIIdB\text{ \textbf{dB}}}$ (\textbf{Reprova}) \\
+        \textbf{Atenuação mínima na rejeição [\si{dB}]} ($\ge \SI{45,00}{dB}$) & $\SI{47,0065}{dB}$ & $\mathbf{\MetricaCAtenStopQXVdB\text{ \textbf{dB}}}$ & $\mathbf{\MetricaCAtenStopQVIIdB\text{ \textbf{dB}}}$ (\textbf{Reprova}) \\
+        \textbf{Atende à máscara?} & \textbf{Sim} & \textbf{Sim} & \textbf{Não} \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.96\linewidth]{fig_C1_respostas_quant_coef.pdf}
+    \caption{Etapa C: Comparação das respostas em magnitude entre o filtro original (\texttt{double}), a versão quantizada em \texttt{Q1.15} (praticamente indistinguível do original) e a versão em \texttt{Q1.7}, com ampliações na banda passante ($\SI{0}{Hz}$ a $\SI{1000}{Hz}$) e na banda de rejeição ($\SI{2200}{Hz}$ a $\SI{4000}{Hz}$).}
+    \label{fig:C1_quant_coef}
+\end{figure}
+
+\subsection{Respostas às Questões de Análise (Etapa C)}
+
+\begin{enumerate}[leftmargin=1.6em, itemsep=3pt]
+    \item \textbf{Quais coeficientes foram mais alterados?}
+    \begin{itemize}[leftmargin=1.2em, itemsep=1pt]
+        \item \textit{Em termos de erro absoluto ($|e_Q[k]|$):} Na resolução \textbf{\texttt{Q1.7}}, o maior erro absoluto ocorreu no par simétrico $k = 2$ e $k = 20$ ($h[2] = h[20] = -0,00513949 \to h_{\text{Q1.7}} = -1/128 = -0,00781250$), atingindo $|e_{\text{Q1.7}}| = \MetricaCErroMaxQVII$ ($68,43\%$ do limite teórico $\Delta_7/2 = \num{3,906250e-3}$), seguido por $k = 8, 14$ ($|e_{\text{Q1.7}}| = \num{2,301705e-3}$) e $k = 3, 19$ ($|e_{\text{Q1.7}}| = \num{2,236844e-3}$). Na resolução \textbf{\texttt{Q1.15}}, o maior erro absoluto ocorreu no coeficiente central $k = 11$ ($h[11] = 0,39940009 \to h_{\text{Q1.15}} = 13088/32768 = 0,39941406$), com $|e_{\text{Q1.15}}| = \MetricaCErroMaxQXV$ ($91,59\%$ de $\Delta_{15}/2 = \num{1,525879e-5}$).
+        \item \textit{Em termos de erro relativo ($|e_Q[k]| / |h[k]|$):} Os coeficientes periféricos das extremidades da janela ($k = 0$ e $k = 22$, seguidos por $k = 2, 20$ e $k = 3, 19$) sofreram as alterações proporcionais mais severas em \texttt{Q1.7}: para $k = 0$ e $k = 22$, o erro relativo foi de $\mathbf{100\%}$ (anulação completa do coeficiente), e para $k = 2$ e $k = 20$ foi de $52,01\%$, pois suas pequenas amplitudes são da mesma ordem de grandeza do passo $\Delta_7 = \num{0,0078125}$.
+    \end{itemize}
+
+    \item \textbf{Algum coeficiente foi quantizado para zero? Explique pela resolução numérica.}
+    Sim. No filtro ideal com $f_c = \SI{1600}{Hz}$ e $F_s = \SI{8000}{Hz}$ ($\omega_c = 0,4\pi$), o argumento $\omega_c(k - 11)$ é múltiplo inteiro não nulo de $\pi$ nos índices $k \in \{1,\, 6,\, 16,\, 21\}$ ($|k - 11| \in \{5,\, 10\}$), que já constituem zeros analíticos exatos da função $\text{sinc}$ (valendo $\sim 10^{-18}$ em \texttt{double} e sendo mapeados exatamente para $0$ tanto em \texttt{Q1.15} quanto em \texttt{Q1.7}$)$. Porém, na quantização em \textbf{\texttt{Q1.7}}, além desses $4$ cruzamentos por zero analíticos, \textbf{os dois coeficientes não nulos das extremidades ($k = 0$ e $k = 22$, onde $h[0] = h[22] = +0,00219838$) também foram colapsados para zero}, totalizando $6$ coeficientes nulos. Isso ocorre porque, na quantização por arredondamento com passo $\Delta = 2^{-F}$, qualquer coeficiente cuja magnitude pertença à zona morta $|h[k]| < \Delta / 2 = 2^{-(F+1)}$ é arredondado para $0$. Em \texttt{Q1.7}, o limiar de resolução é $\Delta_7 / 2 = 2^{-8} = 0,00390625$; como $|h[0]| = 0,00219838 < 0,00390625$, os coeficientes $k=0$ e $k=22$ são zerados, truncando prematuramente as bordas da janela de Hamming e reduzindo o comprimento efetivo do filtro de $N = 23$ para $N_{\text{ef}} = 19$ coeficientes ativos (entre $k=2$ e $k=20$, visto que $k=1$ e $k=21$ também são nulos!). Já em \texttt{Q1.15}, o limiar é $\Delta_{15}/2 = 2^{-16} \approx \num{1,525879e-5} \ll 0,00219838$, preservando integralmente as caudas da janela ($h_{\text{Q1.15}}[0] = 72/32768 = 0,00219727$).
+
+    \item \textbf{A simetria foi preservada?}
+    \textbf{Sim, perfeitamente em ambas as versões} ($\max_k |h_Q[k] - h_Q[N-1-k]| = \num{0,0000e+00}$ para \texttt{Q1.15} e \texttt{Q1.7}, conforme a Tabela~\ref{tab:C2_metricas}). Como a operação de arredondamento determinístico $Q(x) = \text{round}(x \cdot 2^F)/2^F$ é uma função unívoca e os coeficientes originais satisfazem $h[k] = h[N-1-k]$ exatamente antes da quantização, entradas idênticas nos pares simétricos $(k,\, N-1-k)$ são mapeadas em níveis quantizados estritamente idênticos: $h_Q[k] = Q(h[k]) = Q(h[N-1-k]) = h_Q[N-1-k]$.
+
+    \item \textbf{Qual a consequência para a fase?}
+    Como a simetria par em torno do centro $\alpha = 11$ ($h_Q[k] = h_Q[22-k]$) é integralmente preservada pela quantização, \textbf{ambos os filtros quantizados (\texttt{Q1.15} e \texttt{Q1.7}) mantêm a propriedade de fase estritamente linear generalizada (Tipo~I)} na banda passante, com o mesmo atraso de grupo constante $\tau_g = \SI{11,0}{amostras}$ ($\SI{1,3750}{ms}$) e zero distorção de fase. A quantização dos coeficientes afeta apenas a função de amplitude real $A_Q(\omega)$ (e a posição dos zeros no plano-$z$), sem introduzir não-linearidade de fase.
+
+    \item \textbf{Em que banda os efeitos foram mais relevantes?}
+    A degradação espectral relativa mais pronunciada ocorre na \textbf{banda de rejeição}, embora em \texttt{Q1.7} a banda passante também sofra um deslocamento sistemático severo:
+    \begin{itemize}[leftmargin=1.2em, itemsep=1pt]
+        \item \textit{Na banda de rejeição:} Pela linearidade da DTFT, o espectro quantizado é $H_Q(e^{j\omega}) = H(e^{j\omega}) + E(e^{j\omega})$, onde $E(e^{j\omega}) = \sum_{k=0}^{N-1} e_Q[k]\,e^{-j\omega k}$ é o espectro do erro de quantização, limitado por $|E(e^{j\omega})| \le \sum |e_Q[k]|$. Na banda de rejeição, a magnitude original $|H(e^{j\omega})|$ é muito pequena ($\le 10^{-47/20} \approx 0,00446$), resultante do cancelamento destrutivo preciso entre os coeficientes ponderados pela janela de Hamming. Em \texttt{Q1.7}, o erro de quantização (somado à anulação das bordas $k=0$ e $k=22$) é da mesma ordem de grandeza de $|H(e^{j\omega})|$, elevando os lóbulos laterais e degradando a atenuação mínima de $\SI{47,0065}{dB}$ para $\mathbf{\SI{39,8632}{dB}}$ (perda de $\SI{7,1434}{dB}$, violando o piso de $\SI{45,00}{dB}$).
+        \item \textit{Na banda passante:} Embora $|H(e^{j\omega})| \approx 1 \gg |e_Q[k]|$ torne a forma da curva menos sensível a erros individuais aleatórios, em \texttt{Q1.7} onze pares de coeficientes sofreram arredondamento negativo (como pode ser visto pelo predomínio de sinais negativos na coluna $e_{\text{Q1.7}}[k]$ da Tabela~\ref{tab:C1_coeficientes}), acumulando um erro de soma $\sum e_{\text{Q1.7}}[k] = -3/128 = -0,0234375$. Isso deslocou toda a curva da banda passante para baixo em $\SI{-0,205999}{dB}$ (Figura~\ref{fig:C1_quant_coef}, zoom inferior esquerdo), violando o limite inferior de $\SI{-0,10}{dB}$.
+    \end{itemize}
+
+    \item \textbf{Quais versões atendem à máscara?}
+    Apenas a versão \textbf{Original (\texttt{double})} e a versão quantizada em \textbf{\texttt{Q1.15}} ($16\text{ bits}$) atendem à máscara: em \texttt{Q1.15}, o desvio máximo na passante varia apenas de $\SI{0,042323}{dB}$ para $\SI{0,042440}{dB}$ ($\le \SI{0,10}{dB}$) e a atenuação mínima na rejeição varia de $\SI{47,0065}{dB}$ para $\SI{46,9752}{dB}$ ($\ge \SI{45,00}{dB}$). A versão em \textbf{\texttt{Q1.7}} ($8\text{ bits}$) \textbf{reprova em ambas as bandas} ($\delta_{p,\text{máx}} = \SI{0,205999}{dB} > \SI{0,10}{dB}$ e $A_{s,\text{mín}} = \SI{39,8632}{dB} < \SI{45,00}{dB}$).
+
+    \item \textbf{Qual a relação entre soma dos coeficientes e ganho DC?}
+    Avaliando a resposta em frequência do filtro quantizado em $\omega = 0$ ($f = \SI{0}{Hz}$, corrente contínua):
+    \begin{equation}
+        H_Q(e^{j0}) = \sum_{k=0}^{N-1} h_Q[k]\,e^{-j \cdot 0 \cdot k} = \sum_{k=0}^{N-1} h_Q[k] \implies \text{Ganho DC}_{\text{dB}} = 20\log_{10}\!\left|\sum_{k=0}^{N-1} h_Q[k]\right|.
+    \end{equation}
+    Como os coeficientes não são renormalizados após a quantização, os erros individuais $e_Q[k]$ somam-se algebricamente em $\omega = 0$: $\sum h_Q[k] = 1 + \sum e_Q[k]$. Em \texttt{Q1.15}, $\sum h_{\text{Q1.15}}[k] = 32766/32768 = \MetricaCSomaQXV$, produzindo um ganho DC de $\MetricaCGanhoDCQXVdB\text{ dB}$ (desvio desprezível). Em \texttt{Q1.7}, a soma cai para $\sum h_{\text{Q1.7}}[k] = 125/128 = \MetricaCSomaQVII$, resultando diretamente em $\text{Ganho DC} = 20\log_{10}(0,97656250) = \MetricaCGanhoDCQVIIdB\text{ dB}$, que coincide exatamente com o pior desvio observado na banda passante ($\SI{0,205999}{dB}$ em $f = \SI{0}{Hz}$).
+\end{enumerate}
+
+% ==============================================================================
+% 7. ETAPA D — QUANTIZAÇÃO DAS AMOSTRAS DE ENTRADA
+% ==============================================================================
+\section{Etapa D — Quantização das Amostras de Entrada em \texttt{Q1.7} e Análise de SNR}
+
+\subsection{Procedimento Experimental e Critério de Exclusão do Transitório}
+
+Nesta etapa, mantiveram-se os coeficientes originais $h[k]$ ($N=23$) em ponto flutuante (\texttt{double}) para isolar exclusivamente o efeito da quantização de amplitude do conversor analógico-digital (ADC) sobre o sinal de entrada $x[n]$ ($F_s = \SI{8000}{Hz}$, $L = 800\text{ amostras}$, $n = 0 \dots 799$). As amostras foram quantizadas em formato \textbf{\texttt{Q1.7}} ($\Delta = 2^{-7} = 0,0078125$, limite teórico de arredondamento $\Delta/2 = 2^{-8} = \num{3,906250e-3}$) com arredondamento e saturação estrita à faixa representável $[-1,\; 1 - 2^{-7}] = [-1,000000,\; +0,9921875]$:
+\begin{equation}
+    x_q[n] = \min\!\left(\max\!\left(\frac{\text{round}\!\left(x[n] \cdot 2^7\right)}{2^7},\; -1\right),\; 1 - 2^{-7}\right), \qquad e[n] = x_q[n] - x[n].
+\end{equation}
+Foram avaliados os dois sinais de teste especificados no roteiro:
+\begin{itemize}[leftmargin=1.5em, itemsep=1pt]
+    \item \textbf{Caso 1 (Senoide pura na passante):} $x_1[n] = 0,8\sin(2\pi \cdot 500n / F_s)$;
+    \item \textbf{Caso 2 (Sinal composto passante + rejeição):} $x_2[n] = 0,5\sin(2\pi \cdot 500n / F_s) + 0,3\sin(2\pi \cdot 3000n / F_s)$.
+\end{itemize}
+Ambos os sinais (original $x[n]$ e quantizado $x_q[n]$) foram filtrados com os mesmos coeficientes $h[k]$, obtendo-se $y[n]$ e $y_q[n]$, bem como o erro de saída $e_y[n] = y_q[n] - y[n]$.
+
+\paragraph{Documentação do corte de transitório na saída:} O transitório inicial do filtro FIR de ordem $M = N - 1 = 22$ dura as primeiras $22\text{ amostras}$ ($n = 0 \dots 21$). Como o período fundamental discreto de $f_1 = \SI{500}{Hz}$ a $F_s = \SI{8000}{Hz}$ é $N_1 = 8000/500 = 16\text{ amostras}$ e o de $f_2 = \SI{3000}{Hz}$ é $N_2 = 8/3\text{ amostras}$ (cujo mínimo múltiplo comum inteiro é $N_0 = 16\text{ amostras}$), descartaram-se as primeiras $N_{\text{corte}} = 32\text{ amostras}$ ($n = 0 \dots 31$, satisfazendo $32 \ge N - 1 = 22$). Dessa forma, a janela de regime permanente avaliada compreende $n = 32 \dots 799$ ($L_{\text{regime}} = 768\text{ amostras}$), o que corresponde a \textbf{exatamente $48$ períodos fundamentais completos de $16\text{ amostras}$}, eliminando qualquer viés de truncamento de fase no cálculo das potências médias $\overline{y_{\text{ss}}^2}$ e $\overline{e_{y,\text{ss}}^2}$.
+
+A Tabela~\ref{tab:D1_snr} apresenta todas as métricas de erro, potências de sinal e ruído e relações sinal-ruído ($\text{SNR}$) para os Casos~1 e~2, enquanto as Figuras~\ref{fig:D1_caso1} e~\ref{fig:D2_caso2} exibem os gráficos temporais com marcadores discretos explícitos.
+
+\begin{table}[H]
+    \centering
+    \caption{Análise quantitativa da quantização de amostras de entrada em \texttt{Q1.7} ($\Delta = \num{7,8125e-3}$, $\Delta/2 = \num{3,90625e-3}$) para os Casos 1 e 2 ($L = 800$ amostras; regime permanente avaliado em $n = 32 \dots 799$, $L_{\text{regime}} = 768$ amostras).}
+    \label{tab:D1_snr}
+    \small
+    \setlength{\tabcolsep}{4.5pt}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{@{}lcc@{}}
+        \toprule
+        \textbf{Métrica / Grandeza Medida} & \textbf{Caso 1 ($\SI{500}{Hz}$)} & \textbf{Caso 2 ($\SI{500}{Hz} + \SI{3000}{Hz}$)} \\
+        \midrule
+        Sinal de entrada $x[n]$ & $0,8\sin(2\pi\cdot 500n/F_s)$ & $0,5\sin(2\pi\cdot 500n/F_s) + 0,3\sin(2\pi\cdot 3000n/F_s)$ \\
+        Limite teórico ($\Delta / 2 = 2^{-8}$) & $\num{3,906250e-3}$ & $\num{3,906250e-3}$ \\
+        \textbf{Erro máx.\ entrada ($\max_n |e[n]|$)} & $\mathbf{\num{3,185425e-3}}$ ($81,55\%$ de $\Delta/2$) & $\mathbf{\num{2,776249e-3}}$ ($71,07\%$ de $\Delta/2$) \\
+        Respeita $|e[n]| \le \Delta / 2$? & \textbf{Sim} & \textbf{Sim} \\
+        Erro máx.\ saída ($\max_{n\ge 32} |e_y[n]|$) & $\num{1,276482e-3}$ & $\num{8,393524e-4}$ \\
+        \midrule
+        Potência do sinal na entrada ($P_x = \overline{x^2}$) & $0,320000$ & $0,170000$ ($0,125 + 0,045$) \\
+        Potência do sinal na saída ($P_{y,\text{ss}} = \overline{y_{\text{ss}}^2}$) & $0,318617$ & $0,124460$ \\
+        \textbf{Variação da potência do sinal ($\Delta P_{\text{sinal}}$)} & $\mathbf{\SI{-0,018814}{dB}}$ & $\mathbf{\SI{-1,354194}{dB}}$ \\
+        \midrule
+        Potência do ruído na entrada ($P_e = \overline{e^2}$) & $\num{6,667355e-6}$ & $\num{3,516992e-6}$ \\
+        Potência do ruído na saída ($P_{e_y,\text{ss}} = \overline{e_{y,\text{ss}}^2}$) & $\num{8,304642e-7}$ & $\num{2,110931e-7}$ \\
+        \textbf{Variação da potência do ruído ($\Delta P_{\text{ruído}}$)} & $\mathbf{\SI{-9,046327}{dB}}$ & $\mathbf{\SI{-12,216974}{dB}}$ \\
+        \midrule
+        \textbf{SNR de entrada ($\text{SNR}_{\text{in}} = 10\log_{10}(P_x / P_e)$)} & $\mathbf{\MetricaDCasoISNRIn\text{ \textbf{dB}}}$ & $\mathbf{\MetricaDCasoIISNRIn\text{ \textbf{dB}}}$ \\
+        \textbf{SNR de saída ($\text{SNR}_{\text{out}} = 10\log_{10}(P_{y,\text{ss}} / P_{e_y,\text{ss}})$)} & $\mathbf{\MetricaDCasoISNROut\text{ \textbf{dB}}}$ & $\mathbf{\MetricaDCasoIISNROut\text{ \textbf{dB}}}$ \\
+        \textbf{Ganho de SNR ($\Delta\text{SNR} = \text{SNR}_{\text{out}} - \text{SNR}_{\text{in}}$)} & $\mathbf{\MetricaDCasoIDeltaSNR\text{ \textbf{dB}}}$ & $\mathbf{\MetricaDCasoIIDeltaSNR\text{ \textbf{dB}}}$ \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{fig_D1_caso1_amostras_e_erros.pdf}
+    \caption{Etapa D (Caso 1 — $x_1[n] = 0,8\sin(2\pi\cdot 500n/F_s)$): (a) amostras originais $x[n]$ e quantizadas $x_q[n]$ em \texttt{Q1.7} com marcadores explícitos evidenciando os patamares discretos de amplitude; (b) erro de quantização na entrada $e[n]$ contido nos limites teóricos $\pm\Delta/2 = \pm\num{3,90625e-3}$ e exibindo periodicidade de $16\text{ amostras}$; (c) redução da amplitude do erro na saída filtrada $e_y[n]$ após o transitório ($n \ge 32$).}
+    \label{fig:D1_caso1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{fig_D2_caso2_amostras_e_erros.pdf}
+    \caption{Etapa D (Caso 2 — $x_2[n] = 0,5\sin(2\pi\cdot 500n/F_s) + 0,3\sin(2\pi\cdot 3000n/F_s)$): (a) amostras originais e quantizadas em \texttt{Q1.7}; (b) erro de quantização periódico na entrada $e[n]$ ($\max|e[n]| = \num{2,776249e-3} \le \Delta/2$); (c) erro de quantização atenuado na saída $e_y[n]$ em regime permanente.}
+    \label{fig:D2_caso2}
+\end{figure}
+
+\subsection{Respostas às Questões de Análise (Etapa D)}
+
+\begin{enumerate}[leftmargin=1.6em, itemsep=3pt]
+    \item \textbf{O erro de quantização apresenta periodicidade? Por quê?}
+    \textbf{Sim, o erro de quantização na entrada $e[n]$ é estritamente periódico com período fundamental $N_0 = 16\text{ amostras}$ ($\SI{2,0}{ms}$) em ambos os casos}, conforme pode ser verificado visualmente na repetição idêntica do padrão de hastes a cada $16\text{ amostras}$ nos painéis intermediários das Figuras~\ref{fig:D1_caso1} e~\ref{fig:D2_caso2}. A razão matemática é dupla: (i) as frequências dos sinais de teste possuem razão racional simples com a frequência de amostragem $F_s = \SI{8000}{Hz}$ ($\frac{f_1}{F_s} = \frac{500}{8000} = \frac{1}{16} \implies N_1 = 16\text{ amostras}$; $\frac{f_2}{F_s} = \frac{3000}{8000} = \frac{3}{8} \implies 3\text{ ciclos a cada } 8\text{ amostras}$, ou $6\text{ ciclos a cada } 16\text{ amostras}$), de modo que a sequência discreta $x[n]$ repete exatamente os mesmos valores numéricos a cada $N_0 = 16\text{ amostras}$ ($x[n + 16] = x[n]$); e (ii) o quantizador uniforme por arredondamento $Q(\cdot)$ é um operador \textbf{determinístico e sem memória} (invariante no tempo), de sorte que $x_q[n + 16] = Q(x[n + 16]) = Q(x[n]) = x_q[n]$. Consequentemente, $e[n + 16] = x_q[n + 16] - x[n + 16] = e[n]$, o que concentra a potência do erro de quantização nas raias harmônicas discretas múltiplas de $F_s / N_0 = \SI{500}{Hz}$ ($k \cdot \SI{500}{Hz}$), em vez de distribuí-la como um ruído branco contínuo.
+
+    \item \textbf{Como o filtro modifica esse erro?}
+    Pela propriedade de linearidade da convolução discreta com coeficientes constantes em precisão dupla, a saída gerada pela entrada quantizada satisfaz:
+    \begin{equation}
+        y_q[n] = (h * x_q)[n] = \big(h * (x + e)\big)[n] = (h * x)[n] + (h * e)[n] = y[n] + e_y[n] \implies e_y[n] = (h * e)[n].
+    \end{equation}
+    Isto significa que o erro na saída $e_y[n]$ é simplesmente o resultado da passagem da sequência de erro de entrada $e[n]$ através do filtro FIR passa-baixa $H(e^{j\omega})$. Como a distorção de quantização $e[n]$ é rica em harmônicos de alta frequência (localizados em $\SI{1500}{Hz}$, $\SI{2000}{Hz}$, $\SI{2500}{Hz}$, $\SI{3000}{Hz}$, $\SI{3500}{Hz}$ e $\SI{4000}{Hz}$), o filtro FIR passa-baixa \textbf{rejeita fortemente todas as componentes espectrais do erro situadas na banda de transição superior e na banda de rejeição ($f \ge \SI{2200}{Hz}$)}, deixando passar apenas as componentes do erro situadas na banda passante ($f \le \SI{1000}{Hz}$). Em consequência, a potência média do erro cai drasticamente da entrada para a saída: no Caso~1, $P_e$ é reduzida em $\mathbf{\SI{-9,0463}{dB}}$ (fator de redução de $8,03\times$, de $\num{6,6674e-6}$ para $\num{8,3046e-7}$), e o pico temporal cai de $\num{3,1854e-3}$ para $\num{1,2765e-3}$; no Caso~2, $P_e$ é reduzida em $\mathbf{\SI{-12,2170}{dB}}$ (fator de redução de $16,66\times$, de $\num{3,5170e-6}$ para $\num{2,1109e-7}$), e o pico temporal cai de $\num{2,7762e-3}$ para $\num{8,3935e-4}$.
+
+    \item \textbf{A SNR melhora em ambos os casos?}
+    \textbf{Sim, a relação sinal-ruído medida ($\text{SNR} = 10\log_{10}(P_{\text{sinal}} / P_{\text{ruído}})$) melhora substancialmente da entrada para a saída em ambos os casos}:
+    \begin{itemize}[leftmargin=1.2em, itemsep=1pt]
+        \item No \textbf{Caso 1}, a SNR sobe de $\text{SNR}_{\text{in}} = \SI{46,8120}{dB}$ para $\text{SNR}_{\text{out}} = \SI{55,8395}{dB}$, registrando um ganho líquido de $\mathbf{\Delta\text{SNR}_1 = \SI{+9,0275}{dB}}$.
+        \item No \textbf{Caso 2}, a SNR sobe de $\text{SNR}_{\text{in}} = \SI{46,8428}{dB}$ para $\text{SNR}_{\text{out}} = \SI{57,7056}{dB}$, registrando um ganho líquido de $\mathbf{\Delta\text{SNR}_2 = \SI{+10,8628}{dB}}$.
+    \end{itemize}
+
+    \item \textbf{Explique por que não é correto atribuir toda variação de SNR exclusivamente à redução do ruído quando a própria potência do sinal útil também se altera.}
+    Pela definição logarítmica da relação sinal-ruído na entrada e na saída em regime permanente, a variação $\Delta\text{SNR}$ decompõe-se algebricamente em duas parcelas independentes:
+    \begin{equation}
+        \Delta\text{SNR}_{\text{dB}} = \text{SNR}_{\text{out,dB}} - \text{SNR}_{\text{in,dB}} = 10\log_{10}\!\left(\frac{P_{y,\text{ss}}}{P_{e_y,\text{ss}}}\right) - 10\log_{10}\!\left(\frac{P_x}{P_e}\right) = \underbrace{10\log_{10}\!\left(\frac{P_{y,\text{ss}}}{P_x}\right)}_{\Delta P_{\text{sinal,dB}}} - \underbrace{10\log_{10}\!\left(\frac{P_{e_y,\text{ss}}}{P_e}\right)}_{\Delta P_{\text{ruído,dB}}}.
+        \label{eq:deltasnr}
+    \end{equation}
+    No \textbf{Caso 1}, como o sinal de entrada contém apenas a senoide de $\SI{500}{Hz}$ (situada na banda passante, onde $|H(\SI{500}{Hz})| = 0,99783632 \equiv \SI{-0,018814}{dB}$), a potência do sinal praticamente não se altera ($P_x = 0,320000 \to P_{y,\text{ss}} = 0,318617$, ou $\Delta P_{\text{sinal}} = \SI{-0,018814}{dB} \approx \SI{0}{dB}$), de modo que o ganho $\Delta\text{SNR}_1 = -0,018814 - (-9,046327) = \SI{+9,027513}{dB}$ reflete quase integralmente a supressão de $\SI{9,05}{dB}$ na potência do ruído de quantização.
+    
+    Entretanto, no \textbf{Caso 2}, o sinal de entrada $x_2[n]$ possui potência total $P_x = \frac{0,5^2}{2} + \frac{0,3^2}{2} = 0,125 + 0,045 = 0,170000$. Ao atravessar o filtro passa-baixa, a parcela de $\SI{3000}{Hz}$ (de potência $0,045$, equivalente a $26,47\%$ da potência total de entrada) é fortemente rejeitada em $\SI{-52,58}{dB}$, fazendo com que a potência do próprio sinal na saída caia para $P_{y,\text{ss}} = 0,125 \cdot |H(\SI{500}{Hz})|^2 = 0,124460$, o que representa uma \textbf{redução de $\mathbf{\Delta P_{\text{sinal}} = \SI{-1,354194}{dB}}$ na potência do sinal medido}. Embora o ruído de quantização tenha sido atenuado em $\Delta P_{\text{ruído}} = \SI{-12,216974}{dB}$, a variação líquida de SNR observada foi $\Delta\text{SNR}_2 = -1,354194 - (-12,216974) = \SI{+10,862780}{dB}$ (ou seja, $\SI{1,3542}{dB}$ menor do que a redução bruta do ruído). De modo ainda mais geral, se um sinal tivesse a maior parte de sua energia na banda de rejeição (por exemplo, se a amplitude em $\SI{3000}{Hz}$ fosse muito maior que em $\SI{500}{Hz}$), a queda $\Delta P_{\text{sinal,dB}}$ superaria a queda do ruído $\Delta P_{\text{ruído,dB}}$ e a $\text{SNR}_{\text{out}}$ global diminuiria mesmo com o filtro reduzindo a potência absoluta do ruído! Portanto, analisar apenas $\Delta\text{SNR}$ sem separar $\Delta P_{\text{sinal}}$ e $\Delta P_{\text{ruído}}$ conforme a Equação~\eqref{eq:deltasnr} leva a interpretações físicas incorretas.
+\end{enumerate}
+
+% ==============================================================================
+% 8. ETAPA E — PRECISÃO ARITMÉTICA E OVERFLOW
+% ==============================================================================
+\section{Etapa E — Precisão Aritmética e Overflow em Ponto Fixo}
+
+\subsection{Exemplo Numérico de Produto \texttt{Q1.7} e Comparação Arredondamento vs.\ Truncamento}
+
+Para ilustrar o crescimento de palavra na multiplicação em ponto fixo e os erros introduzidos pela redução de precisão de volta ao formato de armazenamento de $8\text{ bits}$ (\texttt{Q1.7}, passo $\Delta = 2^{-7} = 1/128 = 0,0078125$), considere os dois operandos positivos exatos em \texttt{Q1.7} (\texttt{src/etapa\_E\_ponto\_fixo.m}):
+\begin{equation}
+    a = \frac{79}{128} = 0,6171875 \;\; (\texttt{0.1001111}_2), \qquad
+    b = \frac{45}{128} = 0,3515625 \;\; (\texttt{0.0101101}_2).
+\end{equation}
+O produto completo exato em $16\text{ bits}$ (\texttt{Q2.14}, com $14\text{ bits}$ fracionários) é dado por:
+\begin{equation}
+    p_{\text{exato}} = a \cdot b = \frac{79 \times 45}{128 \times 128} = \frac{3555}{16384} = \frac{27 + \frac{99}{128}}{128} = \frac{27,7734375}{128} = \MetricaEProdCompleto \;\; (\texttt{00.00110111100011}_2).
+\end{equation}
+Ao reconverter $p_{\text{exato}}$ de \texttt{Q2.14} para \texttt{Q1.7}, os $7\text{ bits}$ menos significativos ($\texttt{1100011}_2 = 99/16384 = 0,7734375\text{ LSB}_{\text{Q1.7}}$) precisam ser descartados. A Tabela~\ref{tab:E1_ponto_fixo} compara o produto completo com os resultados obtidos por \textbf{arredondamento ao mais próximo} (\texttt{round}, que soma $+1\text{ LSB}$ pois a fração descartada $0,7734375 \ge 0,5\text{ LSB}$) e por \textbf{truncamento} em complemento de dois (\texttt{floor}, que simplesmente descarta os $7\text{ LSBs}$), além de sintetizar as métricas de crescimento de palavra no acumulador e o exemplo numérico de \textit{overflow} em adição \texttt{Q1.7}.
+
+\begin{table}[H]
+    \centering
+    \caption{Etapa E: Exemplo numérico de multiplicação de operandos \texttt{Q1.7} ($a = 79/128$, $b = 45/128$), comparação entre arredondamento e truncamento para \texttt{Q1.7}, dimensionamento de guarda via $\sum|h[k]|$ e exemplo de \textit{overflow} em adição \texttt{Q1.7} (\texttt{results/tab\_E1\_produto\_Q17.csv}).}
+    \label{tab:E1_ponto_fixo}
+    \footnotesize
+    \setlength{\tabcolsep}{4.5pt}
+    \begin{adjustbox}{max width=\textwidth}
+    \begin{tabular}{@{}lllcrr@{}}
+        \toprule
+        \textbf{Operação / Grandeza} & \textbf{Formato} & \textbf{Fração} & \textbf{Palavra Binária} & \multicolumn{1}{c}{\textbf{Valor Decimal}} & \multicolumn{1}{c}{\textbf{Erro ($Q - p_{\text{exato}}$) / [LSB]}} \\
+        \midrule
+        \multicolumn{6}{@{}l}{\textbf{Parte 1 — Multiplicação em Ponto Fixo (\texttt{Q1.7} $\times$ \texttt{Q1.7} $\rightarrow$ \texttt{Q2.14} $\rightarrow$ \texttt{Q1.7})}} \\
+        \midrule
+        Operando $a$ & \texttt{Q1.7} ($8\text{ bits}$) & $79 / 128$ & \texttt{0.1001111} & $+0,61718750000000$ & $0,00000000000000$ \\
+        Operando $b$ & \texttt{Q1.7} ($8\text{ bits}$) & $45 / 128$ & \texttt{0.0101101} & $+0,35156250000000$ & $0,00000000000000$ \\
+        \textbf{Produto completo ($a \cdot b$)} & \textbf{\texttt{Q2.14} ($16\text{ bits}$)} & $\mathbf{3555 / 16384}$ & \texttt{00.00110111100011} & $\mathbf{+0,21697998046875}$ & $\mathbf{0,00000000000000}$ \\
+        Fração descartada ($7\text{ LSBs}$) & $7\text{ bits}$ inf. & $99 / 16384$ & \texttt{1100011} & $+0,00604248046875$ & $0,7734375\text{ LSB}_{\text{Q1.7}}$ \\
+        \rowcolor{rowpass}
+        \textbf{Arredondado (\texttt{round})} & \textbf{\texttt{Q1.7} ($8\text{ bits}$)} & $\mathbf{28 / 128}$ & \texttt{0.0011100} & $\mathbf{+0,21875000000000}$ & $\mathbf{+0,00177001953125}$ ($+0,2265625\text{ LSB}$) \\
+        \rowcolor{rowfail}
+        \textbf{Truncado (\texttt{floor})} & \textbf{\texttt{Q1.7} ($8\text{ bits}$)} & $\mathbf{27 / 128}$ & \texttt{0.0011011} & $\mathbf{+0,21093750000000}$ & $\mathbf{-0,00604248046875}$ ($-0,7734375\text{ LSB}$) \\
+        \midrule
+        \multicolumn{6}{@{}l}{\textbf{Parte 2 — Limite BIBO ($\sum |h[k]|$) e Exemplo de \textit{Overflow} em Adição \texttt{Q1.7} ($0,75 + 0,50 = +1,25$)}} \\
+        \midrule
+        Norma $\ell_1$ ($\sum_{k=0}^{22} |h[k]|$) & \texttt{double} ($N=23$) & --- & --- & $+1,47339547500902$ & $\lceil\log_2(1,4734)\rceil = 1\text{ bit guarda}$ \\
+        Soma exata ($0,75 + 0,50$) & \texttt{Q2.7} ($9\text{ bits}$) & $160 / 128$ & \texttt{01.0100000} & $+1,25000000000000$ & Excede $+127/128$ (\textit{Overflow}) \\
+        \rowcolor{rowpass}
+        Soma com \textbf{Saturação} & \texttt{Q1.7} ($8\text{ bits}$) & $+127 / 128$ & \texttt{0.1111111} & $+0,99218750000000$ & $-0,2578125$ ($-33\text{ LSB}_{\text{Q1.7}}$) \\
+        \rowcolor{rowfail}
+        Soma com \textbf{\textit{Wrap-Around}} & \texttt{Q1.7} ($8\text{ bits}$) & $-96 / 128$ & \texttt{1.0100000} & $-0,75000000000000$ & $\mathbf{-2,0000000}$ ($\mathbf{-256\text{ \textbf{LSB}}_{\text{Q1.7}}}$) \\
+        \midrule
+        \multicolumn{6}{@{}p{0.94\textwidth}@{}}{\scriptsize \textit{Nota:} Passo $\Delta = 2^{-7} = 0,0078125$ ($1\text{ LSB}_{\text{Q1.7}}$). No arredondamento (\texttt{round}), $|e| \le \Delta/2 = 0,5\text{ LSB} = 0,00390625$; no truncamento (\texttt{floor}), $-\Delta < e \le 0$ ($3,41\times$ maior).} \\
+        \bottomrule
+    \end{tabular}
+    \end{adjustbox}
+\end{table}
+
+\subsection{Respostas às Questões Conceituais sobre Crescimento de Palavra e Overflow}
+
+\begin{enumerate}[leftmargin=1.6em, itemsep=3pt]
+    \item \textbf{Crescimento de palavra na multiplicação ($8\text{ bits} \times 8\text{ bits} \to 16\text{ bits}$) e na soma de produtos no acumulador:}
+    Quando multiplicamos duas palavras em complemento de dois de $8\text{ bits}$ no formato \texttt{Q1.7} ($1\text{ bit}$ de sinal/inteiro e $7\text{ bits}$ fracionários, representando números em $[-1,\; 1 - 2^{-7}]$), o produto exato possui $7 + 7 = 14\text{ bits}$ na parte fracionária (resolução $2^{-14}$) e exige $2\text{ bits}$ à esquerda do ponto binário (formato \textbf{\texttt{Q2.14}}, totalizando $2 + 14 = 16\text{ bits}$). O segundo bit inteiro é indispensável não apenas porque a multiplicação de dois sinais gera um bit de sinal redundante para operandos genéricos, mas também para acomodar sem \textit{overflow} o caso extremo $(-1,0) \times (-1,0) = +1,0$ (\texttt{1.0000000}$_2 \times \texttt{1.0000000}_2 = \texttt{01.00000000000000}_2$), já que $+1,0$ não é representável com apenas $1\text{ bit}$ inteiro de sinal ($[-1,\, 1 - 2^{-14}]$). Adicionalmente, no laço de convolução de um filtro FIR de comprimento $N = 23$, o acumulador MAC precisa somar sequencialmente $N = 23$ produtos \texttt{Q2.14}. A adição de múltiplos termos de mesmo sinal amplia a excursão máxima do resultado além da faixa unitária $[-1,\, +1)$, exigindo a extensão da parte inteira do registrador acumulador com \textbf{bits de guarda} (\textit{guard bits}) à esquerda: no pior caso algébrico irrestrito em que todas as $N = 23$ parcelas valessem a amplitude máxima unitária, a soma atingiria $23$, demandando $\lceil \log_2(23) \rceil = 5\text{ bits}$ de guarda adicionais (acumulador de $16 + 5 = 21\text{ bits}$ ou $24/32\text{ bits}$ comerciais).
+
+    \item \textbf{Significado da soma dos módulos dos coeficientes ($\sum_{k=0}^{N-1} |h[k]|$) como limite para a amplitude de saída:}
+    Pela desigualdade triangular aplicada à soma de convolução discreta, para qualquer sinal de entrada limitado em amplitude por $|x[n]| \le X_{\text{máx}}$ (em formato \texttt{Q1.7} fracionário normalizado, $X_{\text{máx}} = 1$), a magnitude da saída $y[n]$ em qualquer instante $n$ é limitada superiormente pela \textbf{norma $\ell_1$ da resposta ao impulso}:
+    \begin{equation}
+        |y[n]| = \left|\sum_{k=0}^{N-1} h[k]\,x[n-k]\right| \le \sum_{k=0}^{N-1} |h[k]| \cdot |x[n-k]| \le X_{\text{máx}} \sum_{k=0}^{N-1} |h[k]|.
+        \label{eq:l1bound}
+    \end{equation}
+    Este limite superior da Equação~\eqref{eq:l1bound} é estreito (atingível quando a entrada é escolhida como $x[n-k] = X_{\text{máx}}\,\text{sgn}(h[k])$). Para o filtro FIR projetado ($N = 23$), embora a soma algébrica seja $\sum h[k] = 1,0$ (ganho DC unitário), a existência de lóbulos laterais negativos na função $\text{sinc}$ janelada resulta em:
+    \begin{equation}
+        \|h\|_1 = \sum_{k=0}^{22} |h[k]| = \MetricaENormaLI \;\; (\MetricaENormaLIdB\text{ dB}).
+    \end{equation}
+    Portanto, mesmo com entrada estritamente contida em $[-1,\, +1)$, uma sequência de entrada adversa que alterne sinais em fase com $\text{sgn}(h[k])$ pode produzir picos transitórios de saída de até $\pm 1,4734 > 1,0$, provocando \textit{overflow} caso a saída ou o acumulador sejam mantidos em formato \texttt{Q1.7}/\texttt{Q1.14} sem margem. Como $1 < \|h\|_1 = 1,4734 \le 2$, esse limite físico garante que \textbf{apenas $\lceil \log_2(1,4734) \rceil = 1\text{ bit}$ de guarda extra} (formato \texttt{Q2.14} no acumulador) é suficiente para impedir qualquer \textit{overflow} no resultado final da soma deste filtro específico, ou alternativamente que os coeficientes/entrada devem ser pré-escalonados por $1 / \|h\|_1 \approx 0,6787$ caso o hardware não possua bits de guarda nem saturação.
+
+    \item \textbf{Definição de \textit{overflow} e distinção entre saturação e retorno circular (\textit{wrap-around}):}
+    Ocorre \textbf{\textit{overflow}} (transbordamento aritmético) quando o resultado exato de uma operação ultrapassa os limites superior ou inferior da faixa dinâmica representável pelo formato numérico de destino (em \texttt{Q1.7} de $8\text{ bits}$, o intervalo $[-1,000000,\; +0,9921875]$). Existem duas políticas principais de tratamento em hardware/DSP, ilustradas na Parte~2 da Tabela~\ref{tab:E1_ponto_fixo} para a adição de duas parcelas positivas em \texttt{Q1.7}, $x_a = +0,75 = 96/128$ (\texttt{0.1100000}$_2$) e $x_b = +0,50 = 64/128$ (\texttt{0.1000000}$_2$), cuja soma exata é $+1,25 = 160/128 > +127/128$:
+    \begin{itemize}[leftmargin=1.2em, itemsep=2pt]
+        \item \textbf{Aritmética com Saturação (\textit{Saturation}):} O hardware detecta o transbordamento e grampeia (\textit{clips}) a saída no valor extremo representável de mesmo sinal, entregando $+127/128 = +0,9921875$ (\texttt{0.1111111}$_2$). Embora introduza um ceifamento não-linear localizado (erro absoluto de $1,25 - 0,9921875 = 0,2578125$), preserva a polaridade e a continuidade de envoltória do sinal.
+        \item \textbf{Retorno Circular (\textit{Wrap-Around}):} É o comportamento nativo da adição binária modular em complemento de dois de $8\text{ bits}$ quando o transporte (\textit{carry}) para o bit de sinal (MSB) é ignorado: $\texttt{01100000}_2\,(96) + \texttt{01000000}_2\,(64) = \texttt{10100000}_2$. Como o bit mais significativo passa a ser $\texttt{1}$, a palavra binária é interpretada como o número negativo $-(128 - 32)/128 = -96/128 = \mathbf{-0,7500000}$! Essa inversão abrupta de polaridade (do topo positivo $+1,25$ para o vale negativo $-0,75$, gerando um erro catastrófico de magnitude $\mathbf{2,0000000}$ igual a toda a excursão fundo de escala) introduz transitórios impulsivos severos e distorção harmônica extrema no sinal processado.
+    \end{itemize}
+\end{enumerate}
+
+% ==============================================================================
+% 9. CONCLUSÃO TÉCNICA (NOS 5 EIXOS EXIGIDOS PELO ROTEIRO)
+% ==============================================================================
+\section{Conclusão Técnica}
+
+Os experimentos numéricos, simulações temporais e análises espectrais desenvolvidos ao longo desta prática permitem estabelecer conclusões técnicas precisas, diferenciadas explicitamente nos cinco eixos fundamentais do projeto:
+
+\begin{enumerate}[label=\textbf{(\roman*)}, leftmargin=2.2em, itemsep=5pt]
+    \item \textbf{Projeto do filtro e atendimento à máscara de especificações:}
+    Demonstramos que a síntese analítica por série de Fourier combinada à janela de Hamming e à normalização de ganho DC ($h[k] = h_{\text{win}}[k]/\sum h_{\text{win}}$) produz filtros FIR Tipo~I de fase estritamente linear, mas que a fórmula clássica de estimativa de comprimento pela largura de transição ($N_{\text{est}} = \lceil 3,3 / 0,15 \rceil = 22$) constitui apenas uma aproximação inicial que \textbf{não garante o cumprimento da máscara}: os comprimentos $N = 21$ e $N = 22$, embora aprovados na banda passante, falham na borda da banda de rejeição ($\SI{2200}{Hz}$) com atenuações de $\SI{40,6091}{dB}$ e $\SI{44,0615}{dB} < \SI{45,00}{dB}$. A varredura sistemática sobre grade densa ($N_{\text{FFT}} = 32768$) identificou $\mathbf{N = 23}$ (\textbf{ordem $\mathbf{M = 22}$}) como o menor comprimento capaz de satisfazer simultaneamente todas as exigências ($\delta_{p,\text{máx}} = \SI{0,042323}{dB} \le \SI{0,10}{dB}$, $A_{s,\text{mín}} = \SI{47,0065}{dB} \ge \SI{45,00}{dB}$, ganho DC $= \SI{0,000000}{dB}$ e atraso de grupo constante $\tau_g = \SI{11,0}{amostras} = \SI{1,3750}{ms}$). Na Etapa~A2, comprovou-se que a otimização minimax (\textit{Equiripple} / Parks-McClellan), ao distribuir o erro uniformemente ao longo das bandas ($\delta_{p,\text{máx}} = \SI{0,083846}{dB}$ e $A_{s,\text{mín}} = \SI{46,5690}{dB}$), atende à mesma máscara com apenas $\mathbf{N_{\text{eq}} = 15}$ coeficientes (ordem $14$), reduzindo em $\mathbf{34,78\%}$ o custo computacional em tempo de execução (de $\SI{184000}{MACs/s}$ para $\SI{120000}{MACs/s}$) e a latência para $\SI{7,0}{amostras}$ ($\SI{0,8750}{ms}$).
+
+    \item \textbf{Correção funcional do algoritmo de buffer circular (\texttt{fir\_circular}):}
+    A implementação amostra a amostra sobre um anel estático de $N = 23$ posições numeradas no sentido horário, combinando escrita em sentido anti-horário (\texttt{idx\_recente}) e varredura de leitura em sentido horário através de um índice auxiliar desacoplado (\texttt{idx\_leitura}), eliminou completamente a necessidade de deslocamento físico de dados em memória ($O(1)$ de atualização de ponteiro versus $O(N)$ cópias por amostra). Os testes temporais confirmaram equivalência numérica exata frente à função nativa \texttt{filter(h,1,x)}, registrando erro absoluto máximo de $\mathbf{\num{0,000000e+00}}$ na resposta ao impulso unitário (recuperando $h[k]$ e repouso nulo para $n \ge 23$) e de $\mathbf{\num{3,330669e-16}}$ na filtragem do sinal de duas senoides ($\SI{500}{Hz} + \SI{3000}{Hz}$). Ficou igualmente demonstrado que a validação temporal frente a \texttt{filter} atesta a exatidão da soma de convolução implementada, mas deve ser complementada pela avaliação via \texttt{freqz} ($\SI{-0,018814}{dB}$ em $\SI{500}{Hz}$ e $\SI{-52,5783}{dB}$ em $\SI{3000}{Hz}$, além da varredura contínua nas bordas) para certificar o cumprimento espectral da máscara.
+
+    \item \textbf{Efeitos da quantização dos coeficientes (\texttt{Q1.15} vs.\ \texttt{Q1.7}):}
+    A quantização por arredondamento sem renormalização preservou exatamente a simetria par dos coeficientes ($\max |h_Q[k] - h_Q[N-1-k]| = 0$) e, por conseguinte, a linearidade estrita de fase em todas as resoluções testadas. No formato de $16\text{ bits}$ (\textbf{\texttt{Q1.15}}, $\Delta = 2^{-15}$), o erro máximo limitou-se a $\num{1,397490e-5}$ ($\text{EQM} = \num{9,057312e-11}$), mantendo a resposta espectral virtualmente inalterada ($\delta_{p,\text{máx}} = \SI{0,042440}{dB}$, $A_{s,\text{mín}} = \SI{46,9752}{dB}$, ganho DC $= \SI{-0,000530}{dB}$) e \textbf{aprovada na máscara}. Já em $8\text{ bits}$ (\textbf{\texttt{Q1.7}}, $\Delta = 2^{-7} = 0,0078125$), a resolução insuficiente provocou dois efeitos destrutivos que \textbf{reprovaram o filtro em ambas as bandas}: (a) a anulação prematura dos coeficientes periféricos $h[0]$ e $h[22]$ ($|0,00219838| < \Delta/2 = 0,00390625$), truncando a janela de Hamming e degradando a atenuação mínima na banda de rejeição de $\SI{47,0065}{dB}$ para $\mathbf{\SI{39,8632}{dB}}$ ($<\SI{45,00}{dB}$); e (b) o acúmulo de erros de arredondamento na soma algébrica ($\sum h_{\text{Q1.7}}[k] = 125/128 = 0,97656250$), deslocando o ganho DC e toda a banda passante para $\mathbf{\SI{-0,205999}{dB}}$ (violando o limite de $\pm\SI{0,10}{dB}$).
+
+    \item \textbf{Efeitos da quantização das amostras de entrada (\texttt{Q1.7}) e interpretação da SNR:}
+    A quantização de amplitude das amostras de entrada em \texttt{Q1.7} manteve o erro instantâneo estritamente contido no intervalo teórico $\pm\Delta/2 = \pm\num{3,906250e-3}$ ($\max|e[n]| = \num{3,185425e-3}$ no Caso~1 e $\num{2,776249e-3}$ no Caso~2) e evidenciou \textbf{periodicidade exata de $N_0 = 16\text{ amostras}$}, decorrente da comensurabilidade racional das frequências de $\SI{500}{Hz}$ e $\SI{3000}{Hz}$ com $F_s = \SI{8000}{Hz}$ sob um quantizador determinístico sem memória. Ao atravessar o filtro passa-baixa, as harmônicas de alta frequência do erro de quantização acima da banda passante foram fortemente atenuadas ($\Delta P_{\text{ruído}} = \SI{-9,0463}{dB}$ no Caso~1 e $\SI{-12,2170}{dB}$ no Caso~2), elevando a SNR em regime permanente ($n \ge 32$) tanto no Caso~1 ($\text{SNR}_{\text{in}} = \SI{46,8120}{dB} \to \text{SNR}_{\text{out}} = \SI{55,8395}{dB}$, $\mathbf{\Delta\text{SNR}_1 = \SI{+9,0275}{dB}}$) quanto no Caso~2 ($\text{SNR}_{\text{in}} = \SI{46,8428}{dB} \to \text{SNR}_{\text{out}} = \SI{57,7056}{dB}$, $\mathbf{\Delta\text{SNR}_2 = \SI{+10,8628}{dB}}$). Comprovou-se, contudo, pela identidade $\Delta\text{SNR}_{\text{dB}} = \Delta P_{\text{sinal,dB}} - \Delta P_{\text{ruído,dB}}$, que no Caso~2 a rejeição da senoide de $\SI{3000}{Hz}$ reduz a potência do próprio sinal na saída em $\mathbf{\Delta P_{\text{sinal}} = \SI{-1,3542}{dB}}$ (de $0,170000$ para $0,124460$), demonstrando que variações de SNR na saída de sistemas seletivos em frequência resultam da ação conjunta sobre o sinal e sobre o ruído.
+
+    \item \textbf{Limites da aritmética de precisão finita e prevenção de \textit{overflow}:}
+    Por fim, a análise de ponto fixo na Etapa~E demonstrou que a multiplicação de dois operandos de $8\text{ bits}$ (\texttt{Q1.7}) exige registrador de produto completo de $16\text{ bits}$ (\textbf{\texttt{Q2.14}}) para evitar perda de precisão intermediária, e que a reconversão para \texttt{Q1.7} por arredondamento (\texttt{round}) reduz o erro de quantização ($+0,2265625\text{ LSB}$, limitado a $|e|\le \Delta/2$) e elimina o viés negativo sistemático do truncamento em complemento de dois (\texttt{floor}, que produziu erro de $-0,7734375\text{ LSB}$, $3,41\times$ maior no exemplo $79/128 \times 45/128$). Além disso, determinou-se que a soma dos módulos dos coeficientes do filtro projetado vale $\mathbf{\sum_{k=0}^{22} |h[k]| = 1,473395}$ ($\SI{3,3664}{dB}$), indicando que entradas limitadas a $|x[n]| \le 1$ podem gerar saídas transitórias de até $1,4734$, exigindo pelo menos $\lceil\log_2(1,4734)\rceil = \mathbf{1\text{ \textbf{bit} de guarda}}$ inteiro adicional no acumulador MAC (ou até $5\text{ bits}$ de guarda no pior caso estrutural de $N=23$ somas), aliado ao uso obrigatório de \textbf{aritmética com saturação} para evitar a inversão catastrófica de polaridade característica do retorno circular (\textit{wrap-around}, onde $+0,75 + 0,50 = +1,25$ colapsa para $-0,75$ com erro absoluto de $2,0$).
+\end{enumerate}
+
+\end{document}

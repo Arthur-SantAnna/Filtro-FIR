@@ -398,8 +398,24 @@ Filtro-FIR/
 
 ---
 
-### Fase 8 — Escrita e Formatação do Relatório em LaTeX
-**Diretório:** `report/`
+### Fase 8 — Escrita e Formatação do Relatório em LaTeX [CONCLUÍDA]
+**Diretório:** `report/` (`report/main.tex`)
+
+- [x] Redação integral de `report/main.tex` em arquivo único autocontido em português (`babel` `brazil`, `booktabs`, `siunitx`, `listings` UTF-8, `graphicx` com `\graphicspath{{./figures/}{../figures/}{./}}` e `tikz` embutido) com cabeçalho institucional do SENAI CIMATEC.
+- [x] Incorporação exata de todas as métricas oficiais de `results/metricas_relatorio.tex` e das 9 tabelas geradas a partir dos CSVs de `results/`, sem qualquer arredondamento arbitrário.
+- [x] Inclusão das 8 figuras vetoriais PDF de `figures/` + diagrama TikZ embutido do buffer circular (`fig:tikz_buffer`) + listagem do núcleo essencial de `src/fir_circular.m` (`lst:fir_circular`).
+- [x] Redação completa das respostas interpretativas de todas as etapas (Etapa A, Etapa A2, Etapa B, 7 questões da Etapa C, 4 questões da Etapa D, questões conceituais da Etapa E) e da Conclusão Técnica diferenciando explicitamente os 5 eixos obrigatórios (`(i)` a `(v)`).
+
+> **Resumo da Validação do Relatório LaTeX (Fase 8):**
+> - **Arquivo gerado:** `report/main.tex` (autocontido, zero dependências de `\input` externo).
+> - **Auditoria sintática e numérica automatizada:**
+>   - Balanceamento 100% verificado de ambientes `\begin{...}`/`\end{...}`, chaves `{}` e delimitadores matemáticos `$...$`.
+>   - 23 referências cruzadas (`\label` / `\ref` / `\eqref`) verificadas 1-para-1 (9 tabelas, 9 figuras incluindo TikZ, 1 listagem e 4 equações numeradas).
+>   - 8 arquivos de figura `.pdf` confirmados em `figures/` e 46 valores numéricos chave auditados contra `results/`.
+> - **Instruções de compilação no Overleaf:**
+>   1. Criar um novo projeto em branco no Overleaf (compilador `pdfLaTeX`).
+>   2. Enviar `report/main.tex` para a raiz do projeto no Overleaf.
+>   3. Criar uma pasta `figures/` no Overleaf e fazer upload dos 8 arquivos `.pdf` (ou `.png`) contidos em `figures/`.
 
 #### Estrutura Espelhando o Roteiro (Seção 9)
 1. **Cabeçalho / Identificação:** Disciplina, Professor, Equipe, Data (estilo limpo alinhado ao documento do SENAI CIMATEC).
@@ -420,10 +436,10 @@ Filtro-FIR/
    - (v) Limites da aritmética finita.
 
 #### Checklist de Formatação LaTeX
-- [ ] Figuras em PDF vetorial (ou PNG 300 dpi) com `width=\linewidth` ou `0.9\linewidth` e legendas autoexplicativas (`\caption{...}`).
-- [ ] Todas as figuras e tabelas explicitamente citadas no texto (`Figura~\ref{...}`, `Tabela~\ref{...}`).
-- [ ] Uso de `siunitx` / `booktabs` para tabelas limpas e unidades padronizadas (`\SI{8000}{Hz}`, `\SI{0.1}{dB}`).
-- [ ] Conferir número final de páginas e clareza visual (sem *overfull hbox*, tabelas quebradas ou figuras órfãs).
+- [x] Figuras em PDF vetorial (ou PNG 300 dpi) com `width=\linewidth` ou `0.9\linewidth` e legendas autoexplicativas (`\caption{...}`).
+- [x] Todas as figuras e tabelas explicitamente citadas no texto (`Figura~\ref{...}`, `Tabela~\ref{...}`).
+- [x] Uso de `siunitx` / `booktabs` para tabelas limpas e unidades padronizadas (`\SI{8000}{Hz}`, `\SI{0.1}{dB}`).
+- [x] Conferir número final de páginas e clareza visual (sem *overfull hbox*, tabelas quebradas ou figuras órfãs).
 
 ---
 

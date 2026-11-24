@@ -139,8 +139,17 @@ Filtro-FIR/
 
 ---
 
-### Fase 2 — Etapa A2: Filter Designer como Ferramenta Auxiliar
+### Fase 2 — Etapa A2: Filter Designer como Ferramenta Auxiliar [CONCLUÍDA]
 **Execução híbrida (GUI MATLAB + Script `src/etapa_A2_equiripple.m`)**
+
+- [x] Conferência do filtro de janelamento ($N=23$) e projeto do filtro *Equiripple* de ordem mínima ($N=15$, ordem $M=14$) para a mesma máscara (`data/coeficientes_equiripple.mat`).
+- [x] Implementação de `src/etapa_A2_equiripple.m` avaliando `h` e `h_equiripple` com `avaliar_mascara.m` sem substituir `h` nas etapas seguintes.
+- [x] Exportação da tabela comparativa `results/tab_A2_comparacao_equiripple.csv` e da figura `figures/fig_A2_comp_janelamento_equiripple` (`.pdf` e `.png`).
+
+> **Resumo dos Valores Numéricos Obtidos (Fase 2 / Etapa A2):**
+> - **Janelamento (Hamming):** $N = 23$ coeficientes (Ordem $M = 22$), desvio máx. passante $= 0{,}042323\text{ dB}$, atenuação mín. rejeição $= 47{,}0065\text{ dB}$, ganho DC $= 0{,}000000\text{ dB}$ ($\sum h[k] = 1{,}000000$), atraso de grupo $= 11{,}0\text{ amostras}$ ($1{,}3750\text{ ms}$), **Atende à máscara: Sim**.
+> - **Equiripple (Parks-McClellan / Ordem Mínima):** $N = 15$ coeficientes (Ordem $M = 14$), desvio máx. passante $= 0{,}083846\text{ dB}$ ($\le 0{,}10\text{ dB}$), atenuação mín. rejeição $= 46{,}5690\text{ dB}$ ($\ge 45{,}00\text{ dB}$), ganho DC $= 0{,}082627\text{ dB}$ ($\sum h_{\text{eq}}[k] = 1{,}009558$), atraso de grupo $= 7{,}0\text{ amostras}$ ($0{,}8750\text{ ms}$), **Atende à máscara: Sim**.
+> - **Redução de custo computacional:** $15$ vs $23$ operações MAC por amostra ($-34{,}8\%$, ou $120.000$ vs $184.000\text{ MACs/s}$ a $F_s = 8.000\text{ Hz}$).
 
 #### Procedimento Manual no Filter Designer (1ª execução)
 1. Abrir `filterDesigner` no MATLAB após rodar a Etapa A.
@@ -171,8 +180,23 @@ Filtro-FIR/
 
 ---
 
-### Fase 3 — Etapa B: Implementação com Buffer Circular
+### Fase 3 — Etapa B: Implementação com Buffer Circular [CONCLUÍDA]
 **Arquivos:** `src/fir_circular.m` e `src/etapa_B_validacao.m`
+
+- [x] Implementação de `src/fir_circular.m` seguindo estritamente a convenção do roteiro (buffer numerado em sentido horário `1..N`, escrita em sentido anti-horário sobrescrevendo a amostra mais antiga e leitura em sentido horário a partir de `idx_recente` com índice auxiliar separado `idx_leitura`, sem chamar `filter`, `conv` ou `fftfilt`).
+- [x] Validação em `src/etapa_B_validacao.m` com impulso unitário ($L = 43$ amostras) e sinal composto de duas senoides ($500\text{ Hz} + 3.000\text{ Hz}$, $L = 400$ amostras), confrontando com `filter(h, 1, x)` e `freqz`.
+- [x] Exportação de `results/tab_B1_erros_e_ganhos.csv`, `results/tikz_buffer_circular.tex`, `figures/fig_B1_impulso_comparacao` e `figures/fig_B2_senoides_temporal` (`.pdf` e `.png`).
+
+> **Resumo dos Valores Numéricos Obtidos (Fase 3 / Etapa B):**
+> - **Teste 1 — Impulso unitário ($L_{\text{imp}} = 43$ amostras):**
+>   - Erro absoluto máximo $\max_n |y_{\text{circ}}[n] - y_{\text{filter}}[n]| = 0$ (`0.000000e+00`).
+>   - Erro absoluto máximo nos primeiros $N=23$ pontos $\max_{1\le k\le N} |y_{\text{circ}}[k] - h[k]| = 0$.
+>   - Amplitude residual máxima na cauda nula ($n \ge N$): $0$.
+> - **Teste 2 — Duas senoides ($500\text{ Hz} + 3.000\text{ Hz}$, $L_{\text{sen}} = 400$ amostras):**
+>   - Erro absoluto máximo $\max_n |y_{\text{circ}}[n] - y_{\text{filter}}[n]| = 3{,}330669\times 10^{-16}$ (precisão de máquina `double`).
+> - **Ganhos exatos via `freqz(h, 1, [500, 3000], Fs)`:**
+>   - Em $f_1 = 500\text{ Hz}$ (banda passante): $|H(500\text{ Hz})| = 0{,}99783632$ ($-0{,}018814\text{ dB}$, desvio $= 0{,}018814\text{ dB} \le 0{,}10\text{ dB} \implies$ **Atende**).
+>   - Em $f_2 = 3.000\text{ Hz}$ (banda de rejeição): $|H(3000\text{ Hz})| = 0{,}00235009$ ($-52{,}5783\text{ dB}$, atenuação $= 52{,}5783\text{ dB} \ge 45{,}00\text{ dB} \implies$ **Atende**).
 
 #### Especificação Exata de `fir_circular(x, h)`
 - **Assinatura:** `function y = fir_circular(x, h)`
@@ -225,8 +249,25 @@ Filtro-FIR/
 
 ---
 
-### Fase 4 — Etapa C: Quantização dos Coeficientes
+### Fase 4 — Etapa C: Quantização dos Coeficientes [CONCLUÍDA]
 **Script:** `src/etapa_C_quant_coef.m`
+
+- [x] Quantização dos coeficientes originais normalizados `h` em **Q1.7** ($F=7$, $\Delta = 2^{-7} = 0{,}0078125$) e **Q1.15** ($F=15$, $\Delta = 2^{-15} \approx 3{,}051758\times 10^{-5}$) por arredondamento `hQ = round(h * 2^F) / 2^F`, **sem renormalizar** após a quantização.
+- [x] Cálculo de erros individuais, erro absoluto máximo, EQM, coeficientes anulados, preservação de simetria, soma/ganho DC e verificação da máscara via `avaliar_mascara.m`.
+- [x] Exportação de `results/tab_C1_coeficientes_erros.csv`, `results/tab_C2_metricas_quant_coef.csv` e `figures/fig_C1_respostas_quant_coef` (`.pdf` e `.png`).
+
+> **Resumo dos Valores Numéricos Obtidos (Fase 4 / Etapa C):**
+> - **Original (`double`, $N=23$):** $\sum h[k] = 1{,}0000000$ (Ganho DC $= 0{,}000000\text{ dB}$), erro simetria $= 0$, desvio máx. passante $= 0{,}042323\text{ dB}$, atenuação mín. rejeição $= 47{,}0065\text{ dB}$, **Atende à máscara: Sim**.
+> - **Q1.15 ($F = 15$, $\Delta/2 = 2^{-16} \approx 1{,}525879\times 10^{-5}$):**
+>   - Erro absoluto máximo: $1{,}397490\times 10^{-5}$ (no coeficiente central $k = 11$, $\le \Delta/2$) | $\text{EQM} = 9{,}057312\times 10^{-11}$.
+>   - Coeficientes iguais a zero: $4$ ($k \in \{1, 6, 16, 21\}$, apenas os cruzamentos analíticos da função $\text{sinc}$ ideal).
+>   - Erro máx. de simetria: $0$ (fase linear Tipo I preservada) | Soma $\sum h_{Q1.15}[k] = 0{,}99993896$ ($32766/32768$, Ganho DC $= -0{,}000530\text{ dB}$).
+>   - Desvio máx. passante: $0{,}042440\text{ dB}$ ($\le 0{,}10\text{ dB}$) | Atenuação mín. rejeição: $46{,}9752\text{ dB}$ ($\ge 45{,}00\text{ dB}$) | **Atende à máscara: Sim**.
+> - **Q1.7 ($F = 7$, $\Delta/2 = 2^{-8} = 0{,}00390625$):**
+>   - Erro absoluto máximo: $2{,}673012\times 10^{-3}$ (no par simétrico $k = 2$ e $k = 20$, $\le \Delta/2$) | $\text{EQM} = 2{,}260906\times 10^{-6}$.
+>   - Coeficientes iguais a zero: $6$ ($k \in \{0, 1, 6, 16, 21, 22\}$, anulando os dois coeficientes periféricos não nulos $k = 0$ e $k = 22$ pois $|h[0]| = 0{,}00219838 < \Delta/2 = 0{,}00390625$).
+>   - Erro máx. de simetria: $0$ (fase linear preservada) | Soma $\sum h_{Q1.7}[k] = 0{,}97656250$ ($125/128$, Ganho DC $= -0{,}205999\text{ dB}$).
+>   - Desvio máx. passante: $0{,}205999\text{ dB}$ ($> 0{,}10\text{ dB}$, reprova) | Atenuação mín. rejeição: $39{,}8632\text{ dB}$ ($< 45{,}00\text{ dB}$, reprova) | **Atende à máscara: Não**.
 
 #### Procedimentos de Código
 1. Partir do vetor `h` original em ponto flutuante (`double`) sem alterar sua normalização.
@@ -256,8 +297,25 @@ Filtro-FIR/
 
 ---
 
-### Fase 5 — Etapa D: Quantização das Amostras de Entrada
+### Fase 5 — Etapa D: Quantização das Amostras de Entrada [CONCLUÍDA]
 **Script:** `src/etapa_D_quant_amostras.m`
+
+- [x] Quantização das amostras de entrada $x[n]$ em **Q1.7** ($\Delta = 2^{-7} = 0{,}0078125$) por arredondamento e saturação estrita em $[-1,\; 1 - 2^{-7}]$, mantendo os coeficientes `h` originais em ponto flutuante (`double`).
+- [x] Avaliação dos Casos 1 e 2 ($L = 800$ amostras, $F_s = 8.000\text{ Hz}$) com exclusão documentada do transitório inicial para $n \ge 32$ (`idx = 33:800`, descartando as primeiras $32$ amostras $\ge N-1 = 22$ e mantendo $768$ amostras $= 48$ períodos inteiros de $N_0 = 16$ amostras).
+- [x] Exportação de `results/tab_D1_snr_comparacao.csv`, `figures/fig_D1_caso1_amostras_e_erros` e `figures/fig_D2_caso2_amostras_e_erros` (`.pdf` e `.png`, com marcadores explícitos).
+
+> **Resumo dos Valores Numéricos Obtidos (Fase 5 / Etapa D):**
+> - **Corte de transitório adotado:** descartadas as primeiras $32$ amostras ($n = 0 \dots 31$), avaliando o regime permanente em $n = 32 \dots 799$ ($L_{\text{regime}} = 768$ amostras $= 48$ ciclos exatos de $N_0 = 16$ amostras).
+> - **Caso 1 — $x_1[n] = 0{,}8\sin(2\pi\cdot 500n/F_s)$:**
+>   - Erro máx. entrada: $\max|e[n]| = 3{,}185425\times 10^{-3} \le \Delta/2 = 3{,}906250\times 10^{-3}$ ($81{,}55\%$ de $\Delta/2$).
+>   - Erro máx. saída (regime $n \ge 32$): $\max|e_y[n]| = 1{,}276482\times 10^{-3}$.
+>   - Potências: $P_x = 0{,}320000 \to P_{y,\text{ss}} = 0{,}318617$ ($-0{,}0188\text{ dB}$); $P_e = 6{,}667355\times 10^{-6} \to P_{e_y,\text{ss}} = 8{,}304642\times 10^{-7}$ ($-9{,}0463\text{ dB}$).
+>   - **SNR:** $\text{SNR}_{\text{in}} = 46{,}8120\text{ dB} \to \text{SNR}_{\text{out}} = 55{,}8395\text{ dB}$ ($\Delta\text{SNR} = +9{,}0275\text{ dB}$).
+> - **Caso 2 — $x_2[n] = 0{,}5\sin(2\pi\cdot 500n/F_s) + 0{,}3\sin(2\pi\cdot 3000n/F_s)$:**
+>   - Erro máx. entrada: $\max|e[n]| = 2{,}776249\times 10^{-3} \le \Delta/2 = 3{,}906250\times 10^{-3}$ ($71{,}07\%$ de $\Delta/2$).
+>   - Erro máx. saída (regime $n \ge 32$): $\max|e_y[n]| = 8{,}393524\times 10^{-4}$.
+>   - Potências: $P_x = 0{,}170000 \to P_{y,\text{ss}} = 0{,}124460$ ($-1{,}3542\text{ dB}$ pela rejeição da componente de $3.000\text{ Hz}$); $P_e = 3{,}516992\times 10^{-6} \to P_{e_y,\text{ss}} = 2{,}110931\times 10^{-7}$ ($-12{,}2170\text{ dB}$).
+>   - **SNR:** $\text{SNR}_{\text{in}} = 46{,}8428\text{ dB} \to \text{SNR}_{\text{out}} = 57{,}7056\text{ dB}$ ($\Delta\text{SNR} = +10{,}8628\text{ dB} = -1{,}3542\text{ dB} - (-12{,}2170\text{ dB})$).
 
 #### Procedimentos de Código
 1. Manter coeficientes `h` originais em ponto flutuante (`double`).
@@ -287,8 +345,22 @@ Filtro-FIR/
 
 ---
 
-### Fase 6 — Etapa E: Precisão Aritmética e Overflow (Conceitual e Breve)
+### Fase 6 — Etapa E: Precisão Aritmética e Overflow (Conceitual e Breve) [CONCLUÍDA]
 **Script auxiliar:** `src/etapa_E_ponto_fixo.m`
+
+- [x] Implementação do exemplo numérico de multiplicação de dois operandos exatos em Q1.7 ($a = 79/128$ e $b = 45/128$) com produto completo em Q2.14 ($3555/16384$), comparando arredondamento (`round`) e truncamento (`floor`) para Q1.7.
+- [x] Cálculo da norma $\ell_1$ dos coeficientes ($\sum_{k=0}^{22} |h[k]|$) como limite superior BIBO de saída e dimensionamento de bits de guarda no acumulador MAC, além do exemplo numérico de *overflow* em adição Q1.7 comparando saturação e *wrap-around*.
+- [x] Exportação de `results/tab_E1_produto_Q17.csv`.
+
+> **Resumo dos Valores Numéricos Obtidos (Fase 6 / Etapa E):**
+> - **Operandos em Q1.7:** $a = 79/128 = 0{,}6171875$ (`01001111_2`) e $b = 45/128 = 0{,}3515625$ (`00101101_2`).
+> - **Produto completo exato em Q2.14 (16 bits):** $a \cdot b = 3555/16384 = 27{,}7734375/128 = 0{,}21697998046875$ (`0000110111100011_2`, parte fracionária descartada $= 99/128\text{ LSB}_{Q1.7} = 0{,}7734375\text{ LSB}_{Q1.7} \ge 0{,}5\text{ LSB}$).
+> - **Arredondado para Q1.7 (`round`):** $28/128 = 0{,}2187500$ (`00011100_2`), erro $= +0{,}00177001953125$ ($+0{,}2265625\text{ LSB}_{Q1.7}$, magnitude $\le \Delta/2 = 0{,}00390625$).
+> - **Truncado para Q1.7 (`floor`):** $27/128 = 0{,}2109375$ (`00011011_2`), erro $= -0{,}00604248046875$ ($-0{,}7734375\text{ LSB}_{Q1.7}$, magnitude $< \Delta = 0{,}0078125$).
+> - **Norma $\ell_1$ dos coeficientes ($N = 23$):** $\sum_{k=0}^{22} |h[k]| = 1{,}47339547500902$ ($3{,}3664\text{ dB}$), exigindo $\lceil\log_2(1{,}4734)\rceil = 1\text{ bit}$ de guarda pela restrição física do filtro ($\lceil\log_2(23)\rceil = 5\text{ bits}$ no pior caso genérico de $23$ parcelas).
+> - **Exemplo de *overflow* em adição Q1.7:** $0{,}75\;(96/128) + 0{,}50\;(64/128) = +1{,}25\;(160/128) > +0{,}9921875\;(127/128)$:
+>   - **Com Saturação:** $+127/128 = +0{,}9921875$ (`01111111_2`, erro absoluto $= 0{,}2578125$).
+>   - **Com Retorno Circular (*Wrap-Around*):** $-96/128 = -0{,}7500000$ (`10100000_2`, erro absoluto $= 2{,}0000000$, inversão de sinal).
 
 #### Procedimentos de Código e Conteúdo
 1. Escolher um par simples e didático de operandos em Q1.7 (ex.: $a = 0{,}5 = 64/128$ e $b = 0{,}375 = 48/128$, ou valores não exatos em 7 bits após multiplicação como $a = 75/128 = 0{,}5859375$ e $b = 43/128 = 0{,}3359375$ para que arredondamento e truncamento produzam resultados distintos e claros!).

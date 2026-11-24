@@ -1,0 +1,10 @@
+Resultado,Janelamento,Equiripple
+Numero de coeficientes,23,15
+Ordem do filtro,22,14
+Desvio maximo na passante (dB),0.042323,0.083846
+Atenuacao minima na rejeicao (dB),47.0065,46.5690
+Ganho DC (dB),0.000000,0.082627
+Soma dos coeficientes,1.000000,1.009558
+Atraso de grupo (amostras),11.0,7.0
+Atraso de grupo (ms),1.3750,0.8750
+Atende a mascara?,Sim,Sim

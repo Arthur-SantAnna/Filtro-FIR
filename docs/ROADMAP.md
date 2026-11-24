@@ -381,11 +381,20 @@ Filtro-FIR/
 
 ---
 
-### Fase 7 — Orquestração e Validação Ponta a Ponta em MATLAB
-- [ ] Escrever `src/main.m` chamando `config_specs`, `etapa_A_janelamento`, `etapa_A2_equiripple`, `etapa_B_validacao`, `etapa_C_quant_coef`, `etapa_D_quant_amostras` e `etapa_E_ponto_fixo` em sequência.
-- [ ] Rodar `main.m` a partir de uma sessão limpa do MATLAB (`clear; clc; close all;`) e confirmar que **nenhuma intervenção manual** ocorre durante a execução.
-- [ ] Inspecionar todas as figuras em `figures/` (verificar sobreposição de rótulos, unidades nos eixos em Hz, dB, amostras, ms, legendas claras e linhas de máscara visíveis).
-- [ ] Conferir todos os números exportados em `results/` para consistência cruzada entre etapas.
+### Fase 7 — Orquestração e Validação Ponta a Ponta em MATLAB [CONCLUÍDA]
+**Script orquestrador:** `src/main.m`
+
+- [x] Escrever `src/main.m` chamando `config_specs`, `etapa_A_janelamento`, `etapa_A2_equiripple`, `etapa_B_validacao`, `etapa_C_quant_coef`, `etapa_D_quant_amostras` e `etapa_E_ponto_fixo` em sequência.
+- [x] Rodar `main.m` a partir de uma sessão limpa do MATLAB (`clear; clc; close all;`) e confirmar que **nenhuma intervenção manual** ocorre durante a execução.
+- [x] Inspecionar todas as figuras em `figures/` (verificar sobreposição de rótulos, unidades nos eixos em Hz, dB, amostras, ms, legendas claras e linhas de máscara visíveis).
+- [x] Conferir todos os números exportados em `results/` para consistência cruzada entre etapas, gerando `results/resumo_metricas.txt` e `results/metricas_relatorio.tex` como fonte única da verdade para o relatório LaTeX.
+
+> **Resumo da Validação Ponta a Ponta (Fase 7):**
+> - **Comando validado:** `matlab -batch "run('src/main.m')"` (tempo total $\approx 29{,}3\text{ s}$, código de saída `0`, zero intervenção manual).
+> - **Auditoria automática de 29 artefatos (`todos_integros = true`):**
+>   - **Dados (`.mat`):** `data/coeficientes_FIR.mat`, `data/coeficientes_equiripple.mat`.
+>   - **Tabelas e Resumos (`results/`):** `tab_A1_varredura_N.csv`, `tab_A2_metricas_finais.csv`, `tab_A2_comparacao_equiripple.csv`, `tab_B1_erros_e_ganhos.csv`, `tikz_buffer_circular.tex`, `tab_C1_coeficientes_erros.csv`, `tab_C2_metricas_quant_coef.csv`, `tab_D1_snr_comparacao.csv`, `tab_E1_produto_Q17.csv`, `resumo_metricas.txt`, `metricas_relatorio.tex`.
+>   - **Figuras (`figures/`, pares `.pdf` vetorial + `.png` 300 dpi):** `fig_A1_impulso_janela`, `fig_A2_magnitude_mascara`, `fig_A2_comp_janelamento_equiripple`, `fig_B1_impulso_comparacao`, `fig_B2_senoides_temporal`, `fig_C1_respostas_quant_coef`, `fig_D1_caso1_amostras_e_erros`, `fig_D2_caso2_amostras_e_erros`.
 
 ---
 

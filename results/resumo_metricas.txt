@@ -1,0 +1,102 @@
+======================================================================
+RESUMO CONSOLIDADO DE METRICAS - PROJETO FILTRO FIR PASSA-BAIXA
+Disciplina : Processamento Digital de Sinais (SENAI CIMATEC) - Pratica 3
+Professor  : Elio Pithon Sarno Filho
+======================================================================
+
+0. ESPECIFICACOES DA MASCARA
+  Frequencia de amostragem (Fs)          : 8000 Hz
+  Banda passante (Fpass)                 : 0 a 1000 Hz
+  Desvio maximo na passante (tol_pass)   : +/-0.10 dB
+  Banda de rejeicao (Fstop)              : 2200 a 4000 Hz
+  Atenuacao minima na rejeicao (Astop)   : 45.00 dB
+  Frequencia de corte ideal inicial (fc) : 1600 Hz
+  Grade de avaliacao espectral (Nfft)    : 32768 pontos
+
+1. ETAPA A - PROJETO POR SERIE DE FOURIER E JANELA DE HAMMING
+  Largura de transicao (delta_f)         : 1200.0 Hz (delta_omega = 0,3*pi = 0.942478 rad/amostra)
+  Estimativa inicial (fator 3,3)         : N_est = 22 coeficientes (Ordem 21)
+  Estimativa alternativa (fator 4,0)     : N_est_alt = 27 coeficientes (Ordem 26)
+  Fronteira N = 21 (Impar, Ordem 20)     : Desvio pass = 0.063688 dB | Aten stop = 40.6091 dB (Reprova stop)
+  Fronteira N = 22 (Par, Ordem 21)       : Desvio pass = 0.044035 dB | Aten stop = 44.0615 dB (Reprova stop)
+  Menor comprimento aprovado (N)         : 23 coeficientes (Impar, Ordem M = 22)
+  Desvio maximo na banda passante        : 0.042323 dB (<= 0,10 dB)
+  Atenuacao minima na banda de rejeicao  : 47.0065 dB (>= 45,00 dB)
+  Soma dos coeficientes sum(h[k])        : 1.0000000000000000
+  Ganho DC                               : 0.000000 dB
+  Erro maximo de simetria                : 0.0000e+00
+  Atraso de grupo constante              : 11.0 amostras (1.3750 ms)
+
+2. ETAPA A2 - COMPARACAO JANELAMENTO (HAMMING) VS EQUIRIPPLE (FILTER DESIGNER)
+  [Janelamento Hamming]
+    Numero de coeficientes (N)           : 23 (Ordem M = 22)
+    Desvio maximo na passante            : 0.042323 dB
+    Atenuacao minima na rejeicao         : 47.0065 dB
+    Ganho DC / Soma dos coeficientes     : 0.000000 dB (soma = 1.000000)
+    Atraso de grupo                      : 11.0 amostras (1.3750 ms)
+    Custo computacional a Fs = 8000 Hz   : 23 MACs/amostra (184000 MACs/s)
+  [Equiripple Ordem Minima]
+    Numero de coeficientes (N_eq)        : 15 (Ordem M_eq = 14)
+    Desvio maximo na passante            : 0.083846 dB
+    Atenuacao minima na rejeicao         : 46.5690 dB
+    Ganho DC / Soma dos coeficientes     : +0.082627 dB (soma = 1.009558)
+    Atraso de grupo                      : 7.0 amostras (0.8750 ms)
+    Custo computacional a Fs = 8000 Hz   : 15 MACs/amostra (120000 MACs/s | Reducao de 34.78%)
+
+3. ETAPA B - IMPLEMENTACAO COM BUFFER CIRCULAR (fir_circular)
+  Erro max. Impulso (fir_circular vs filter)       : 0.000000e+00
+  Erro max. Impulso (fir_circular(1:N) vs h[k])    : 0.000000e+00
+  Amplitude residual na cauda nula (n >= N)        : 0.000000e+00
+  Erro max. Duas Senoides (fir_circular vs filter) : 3.330669e-16
+  Ganho via freqz em f1 = 500 Hz (Passante)        : |H| = 0.99783632 (-0.018814 dB | Desvio = 0.018814 dB <= 0,10 dB)
+  Ganho via freqz em f2 = 3000 Hz (Rejeicao)       : |H| = 0.00235009 (-52.5783 dB | Atenuacao = 52.5783 dB >= 45,00 dB)
+
+4. ETAPA C - QUANTIZACAO DOS COEFICIENTES (Q1.15 E Q1.7 SEM RENORMALIZAR)
+  [Q1.15 - F = 15 bits, Delta = 2^-15 = 3.051758e-05, Delta/2 = 1.525879e-05]
+    Erro absoluto maximo                 : 1.397490e-05 (no coef. central k = 11)
+    Erro quadratico medio (EQM)          : 9.057312e-11
+    Coeficientes iguais a zero           : 4 (k = [1   6  16  21])
+    Erro maximo de simetria              : 0.0000e+00
+    Soma dos coeficientes / Ganho DC     : 0.99993896 (-0.000530 dB)
+    Desvio max. passante / Aten. min.    : 0.042440 dB / 46.9752 dB (Atende mascara: 1)
+  [Q1.7 - F = 7 bits, Delta = 2^-7 = 0.0078125, Delta/2 = 0.00390625]
+    Erro absoluto maximo                 : 2.673012e-03 (no par simetrico k = 2 e k = 20)
+    Erro quadratico medio (EQM)          : 2.260906e-06
+    Coeficientes iguais a zero           : 6 (k = [0   1   6  16  21  22])
+    Erro maximo de simetria              : 0.0000e+00
+    Soma dos coeficientes / Ganho DC     : 0.97656250 (-0.205999 dB)
+    Desvio max. passante / Aten. min.    : 0.205999 dB / 39.8632 dB (Atende mascara: 0)
+
+5. ETAPA D - QUANTIZACAO DAS AMOSTRAS DE ENTRADA EM Q1.7 E ANALISE DE SNR
+  Janela de regime permanente            : n = 32..799 (768 amostras = 48 periodos de 16 amostras)
+  [Caso 1: x1[n] = 0,8*sen(2*pi*500*n/Fs)]
+    Erro abs. max. na entrada max|e[n]|  : 3.185425e-03 <= Delta/2 = 3.906250e-03 (81.55% de Delta/2)
+    Erro abs. max. na saida (regime)     : 1.276482e-03
+    Potencia do sinal (P_x -> P_y_ss)    : 0.320000 -> 0.318617 (-0.0188 dB)
+    Potencia do ruido (P_e -> P_ey_ss)   : 6.667355e-06 -> 8.304642e-07 (-9.0463 dB)
+    SNR (Entrada -> Saida | Delta SNR)   : 46.8120 dB -> 55.8395 dB (+9.0275 dB)
+  [Caso 2: x2[n] = 0,5*sen(2*pi*500*n/Fs) + 0,3*sen(2*pi*3000*n/Fs)]
+    Erro abs. max. na entrada max|e[n]|  : 2.776249e-03 <= Delta/2 = 3.906250e-03 (71.07% de Delta/2)
+    Erro abs. max. na saida (regime)     : 8.393524e-04
+    Potencia do sinal (P_x -> P_y_ss)    : 0.170000 -> 0.124460 (-1.3542 dB)
+    Potencia do ruido (P_e -> P_ey_ss)   : 3.516992e-06 -> 2.110931e-07 (-12.2170 dB)
+    SNR (Entrada -> Saida | Delta SNR)   : 46.8428 dB -> 57.7056 dB (+10.8628 dB)
+
+6. ETAPA E - PRECISAO ARITMETICA EM PONTO FIXO (Q1.7) E OVERFLOW
+  Operando a (Q1.7)                      : 79/128 = 0.6171875
+  Operando b (Q1.7)                      : 45/128 = 0.3515625
+  Produto completo exato a*b (Q2.14)     : 3555/16384 = 0.21697998046875 (27.7734375/128)
+  Resultado arredondado p/ Q1.7 (round)  : 28/128 = 0.2187500 (Erro = +0.00177001953125 = +0.2265625 LSB)
+  Resultado truncado p/ Q1.7 (floor)     : 27/128 = 0.2109375 (Erro = -0.00604248046875 = -0.7734375 LSB)
+  Norma L1 dos coeficientes sum(|h[k]|)  : 1.47339547500902 (3.3664 dB)
+  Bits de guarda no acumulador           : 1 bit (norma L1) | 5 bits (pior caso N=23)
+  Exemplo overflow (0,75 + 0,50 = +1,25) : Saturacao = +0.9921875 (erro = 0.2578125) | Wrap-Around = -0.7500000 (erro = 2.0000000)
+
+7. TEMPOS DE EXECUCAO
+  Etapa A  : 10.806 s
+  Etapa A2 : 3.351 s
+  Etapa B  : 4.919 s
+  Etapa C  : 3.415 s
+  Etapa D  : 6.665 s
+  Etapa E  : 0.062 s
+  TOTAL    : 29.281 s

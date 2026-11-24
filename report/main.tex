@@ -296,8 +296,10 @@ O fluxo experimental foi estruturado de forma inteiramente automatizada e reprod
 
 A partir das bordas especificadas na Tabela~\ref{tab:especificacoes}, obtêm-se a largura da banda de transição em frequência contínua ($\Delta f$) e sua correspondente largura angular discreta normalizada ($\Delta\omega$):
 \begin{equation}
-    \Delta f = F_{\text{stop}} - F_{\text{pass}} = 2200 - 1000 = \SI{1200}{Hz}, \qquad
-    \Delta\omega = \frac{2\pi\,\Delta f}{F_s} = \frac{2\pi \cdot 1200}{8000} = 0,3\pi \approx \SI{0,942478}{rad/amostra}.
+    \begin{aligned}
+        \Delta f &= F_{\text{stop}} - F_{\text{pass}} = 2200 - 1000 = \SI{1200}{Hz}, \\
+        \Delta\omega &= \frac{2\pi\,\Delta f}{F_s} = \frac{2\pi \cdot 1200}{8000} = 0,3\pi \approx \SI{0,942478}{rad/amostra}.
+    \end{aligned}
 \end{equation}
 Para a janela de Hamming, cuja atenuação teórica do primeiro lóbulo lateral é de aproximadamente $\SI{41}{dB}$ a $\SI{43}{dB}$ (com atenuação assintótica na banda de rejeição da ordem de $\SI{53}{dB}$ para um filtro passa-baixa integrado), a literatura clássica relaciona a largura de transição normalizada $\Delta f / F_s = 1200 / 8000 = 0,15$ ao comprimento $N$ por meio da relação aproximada ensinada em aula:
 \begin{equation}
@@ -496,74 +498,144 @@ end
 
 \begin{figure}[H]
     \centering
-    % Diagrama TikZ autocontido do Buffer Circular FIR (incorporado de results/tikz_buffer_circular.tex)
+    % Diagrama TikZ autocontido do Buffer Circular FIR (sincronizado com results/tikz_buffer_circular.tex)
     \begin{adjustbox}{max width=\textwidth}
-    \begin{tikzpicture}[>=stealth, font=\small, scale=0.95]
-        % Anéis de referência do buffer circular
-        \draw[thick, fill=gray!5] (0,0) circle (2.8cm);
-        \draw[thick, fill=white]  (0,0) circle (1.55cm);
+    \begin{tikzpicture}[>=stealth, font=\small, scale=1.0]
+        % --- 1. ANEL DO BUFFER CIRCULAR (R_in = 2.15cm, R_out = 3.90cm) ---
+        \draw[thick, fill=gray!5] (0,0) circle (3.90cm);
+        \draw[thick, fill=white]  (0,0) circle (2.15cm);
 
         % Divisões radiais das 8 células ilustrativas (representando 1..N)
         \foreach \ang in {22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5} {
-            \draw[thick, gray!70] (\ang:1.55cm) -- (\ang:2.8cm);
+            \draw[thick, gray!70] (\ang:2.15cm) -- (\ang:3.90cm);
         }
 
-        % Destaque colorido para a célula atual de idx_recente (posição 1 no topo, 90 graus)
-        \fill[blue!15] (67.5:1.55cm) arc (67.5:112.5:1.55cm) -- (112.5:2.8cm) arc (112.5:67.5:2.8cm) -- cycle;
-        \draw[thick, blue!70!black] (67.5:1.55cm) arc (67.5:112.5:1.55cm) -- (112.5:2.8cm) arc (112.5:67.5:2.8cm) -- cycle;
+        % Destaque azul para a célula atual de idx_recente (Pos. 1 no topo, 90 graus)
+        \fill[blue!14] (67.5:2.15cm) arc (67.5:112.5:2.15cm) -- (112.5:3.90cm) arc (112.5:67.5:3.90cm) -- cycle;
+        \draw[thick, blue!70!black] (67.5:2.15cm) arc (67.5:112.5:2.15cm) -- (112.5:3.90cm) arc (112.5:67.5:3.90cm) -- cycle;
 
-        % Destaque suave para a célula mais antiga (posição N à esquerda do topo, 135 graus),
+        % Destaque vermelho para a célula mais antiga (Pos. N, 135 graus),
         % que será sobrescrita no próximo passo anti-horário
-        \fill[red!10] (112.5:1.55cm) arc (112.5:157.5:1.55cm) -- (157.5:2.8cm) arc (157.5:112.5:2.8cm) -- cycle;
-        \draw[thick, red!60!black] (112.5:1.55cm) arc (112.5:157.5:1.55cm) -- (157.5:2.8cm) arc (157.5:112.5:2.8cm) -- cycle;
+        \fill[red!10] (112.5:2.15cm) arc (112.5:157.5:2.15cm) -- (157.5:3.90cm) arc (157.5:112.5:3.90cm) -- cycle;
+        \draw[thick, red!60!black] (112.5:2.15cm) arc (112.5:157.5:2.15cm) -- (157.5:3.90cm) arc (157.5:112.5:3.90cm) -- cycle;
 
-        % Numeração das posições no sentido horário (1, 2, 3, 4, 5, ..., N-1, N)
-        \node[font=\scriptsize\bfseries, blue!80!black] at (90:3.08cm)  {Pos.\ $1$};
-        \node[font=\scriptsize\bfseries, gray!80!black] at (45:3.08cm)  {Pos.\ $2$};
-        \node[font=\scriptsize\bfseries, gray!80!black] at (0:3.12cm)   {Pos.\ $3$};
-        \node[font=\scriptsize\bfseries, gray!80!black] at (-45:3.12cm) {Pos.\ $4$};
-        \node[font=\scriptsize\bfseries, gray!80!black] at (-90:3.08cm) {Pos.\ $5$};
-        \node[font=\scriptsize\bfseries, gray!80!black] at (-135:3.15cm){$\cdots$};
-        \node[font=\scriptsize\bfseries, gray!80!black] at (180:3.25cm) {Pos.\ $N\!-\!1$};
-        \node[font=\scriptsize\bfseries, red!75!black]  at (135:3.15cm) {Pos.\ $N$};
+        % Numeração das posições no sentido horário (com âncoras externas para nunca tocar o anel)
+        \node[anchor=south,      font=\footnotesize\bfseries, text=blue!80!black] at (90:4.02cm)   {Pos.\ $1$};
+        \node[anchor=south west, font=\footnotesize\bfseries, text=gray!80!black] at (45:4.00cm)   {Pos.\ $2$};
+        \node[anchor=west,       font=\footnotesize\bfseries, text=gray!80!black] at (0:4.02cm)    {Pos.\ $3$};
+        \node[anchor=north west, font=\footnotesize\bfseries, text=gray!80!black] at (-45:4.00cm)  {Pos.\ $4$};
+        \node[anchor=north,      font=\footnotesize\bfseries, text=gray!80!black] at (-90:4.02cm)  {Pos.\ $5$};
+        \node[anchor=north east, font=\footnotesize\bfseries, text=gray!80!black] at (-135:4.00cm) {$\cdots$};
+        \node[anchor=east,       font=\footnotesize\bfseries, text=gray!80!black] at (180:4.02cm)  {Pos.\ $N\!-\!1$};
+        \node[anchor=south east, font=\footnotesize\bfseries, text=red!75!black]  at (135:4.00cm)  {Pos.\ $N$};
 
-        % Conteúdo das amostras armazenadas e coeficientes associados na leitura horária
-        \node[align=center, font=\scriptsize] at (90:2.18cm)   {$\mathbf{x[n]}$\\[-1pt]{\tiny $\times h[1]$}};
-        \node[align=center, font=\scriptsize] at (45:2.18cm)   {$x[n\!-\!1]$\\[-1pt]{\tiny $\times h[2]$}};
-        \node[align=center, font=\scriptsize] at (0:2.18cm)    {$x[n\!-\!2]$\\[-1pt]{\tiny $\times h[3]$}};
-        \node[align=center, font=\scriptsize] at (-45:2.18cm)  {$x[n\!-\!3]$\\[-1pt]{\tiny $\times h[4]$}};
-        \node[align=center, font=\scriptsize] at (-90:2.18cm)  {$x[n\!-\!4]$\\[-1pt]{\tiny $\times h[5]$}};
-        \node[align=center, font=\scriptsize] at (-135:2.18cm) {$\ddots$};
-        \node[align=center, font=\scriptsize] at (180:2.18cm)  {$x[n\!-\!N\!+\!2]$\\[-1pt]{\tiny $\times h[N\!-\!1]$}};
-        \node[align=center, font=\scriptsize] at (135:2.18cm)  {$x[n\!-\!N\!+\!1]$\\[-1pt]{\tiny $\times h[N]$}};
+        % Conteúdo das amostras armazenadas e coeficientes associados na leitura horária (R_mid = 3.025cm)
+        \node[align=center, font=\footnotesize] at (90:3.025cm)   {$\mathbf{x[n]}$\\[1pt]{\scriptsize $\times\, h[1]$}};
+        \node[align=center, font=\footnotesize] at (45:3.025cm)   {$x[n-1]$\\[1pt]{\scriptsize $\times\, h[2]$}};
+        \node[align=center, font=\footnotesize] at (0:3.025cm)    {$x[n-2]$\\[1pt]{\scriptsize $\times\, h[3]$}};
+        \node[align=center, font=\footnotesize] at (-45:3.025cm)  {$x[n-3]$\\[1pt]{\scriptsize $\times\, h[4]$}};
+        \node[align=center, font=\footnotesize] at (-90:3.025cm)  {$x[n-4]$\\[1pt]{\scriptsize $\times\, h[5]$}};
+        \node[align=center, font=\footnotesize] at (-135:3.025cm) {$\cdots$};
+        \node[align=center, font=\scriptsize]   at (180:3.025cm)  {$x[n\!-\!N\!+\!2]$\\[1pt]{$\times\, h[N\!-\!1]$}};
+        \node[align=center, font=\scriptsize]   at (135:3.025cm)  {$x[n\!-\!N\!+\!1]$\\[1pt]{$\times\, h[N]$}};
 
         % Ponteiro da amostra mais recente (idx_recente)
-        \draw[->, ultra thick, blue!80!black] (90:4.15cm) -- (90:3.35cm);
-        \node[above, align=center, font=\footnotesize\bfseries, blue!80!black] at (90:4.15cm)
-            {\texttt{idx\_recente}\\{\scriptsize (amostra mais recente $x[n]$)}};
+        \draw[->, ultra thick, blue!80!black] (90:5.50cm) -- (90:4.58cm);
+        \node[above, align=center, font=\footnotesize\bfseries, text=blue!80!black] at (90:5.50cm)
+            {\texttt{idx\_recente}\\[-1pt]{\scriptsize (amostra mais recente $x[n]$)}};
 
-        % Seta anti-horária de escrita (próxima posição de escrita)
-        \draw[->, very thick, red!75!black, dashed] (100:3.65cm) arc (100:142:3.65cm);
-        \node[above left, align=right, font=\scriptsize\bfseries, red!75!black] at (132:3.75cm)
-            {Próxima escrita (sentido anti-horário)\\{\tiny \texttt{idx\_recente = idx\_recente - 1}}\\[-2pt]{\tiny (sobrescreve a amostra mais antiga $x[n\!-\!N\!+\!1]$)}};
+        % Seta anti-horária de escrita e caixa explicativa à esquerda
+        \draw[->, very thick, red!75!black, dashed] (106:4.85cm) arc (106:128:4.85cm);
+        \node[draw=red!60!black, fill=red!5, rounded corners=3pt, inner sep=5pt,
+              text width=4.35cm, align=left, font=\scriptsize, anchor=south east] at (-3.65, 3.90)
+            {\textbf{\textcolor{red!75!black}{Próxima escrita (anti-horário)}}\\[2pt]
+             \texttt{idx\_recente = idx\_recente - 1}\\
+             Sobrescreve a amostra mais antiga $x[n-N+1]$ na Pos.\ $N$.};
 
-        % Seta horária de leitura (idx_leitura) na parte externa direita
-        \draw[->, very thick, green!50!black] (80:3.65cm) arc (80:-35:3.65cm);
-        \node[above right, align=left, font=\scriptsize\bfseries, green!45!black] at (35:3.75cm)
-            {Leitura e acumulação MAC (sentido horário)\\{\tiny \texttt{idx\_leitura} parte de \texttt{idx\_recente} ($k = 1 \dots N$)}\\[-2pt]{\tiny \texttt{idx\_leitura = idx\_leitura + 1} (com retorno circular)}};
+        % Seta horária de leitura e caixa explicativa à direita
+        \draw[->, very thick, green!50!black] (74:4.95cm) arc (74:16:4.95cm);
+        \node[draw=green!50!black, fill=green!5, rounded corners=3pt, inner sep=5pt,
+              text width=4.45cm, align=left, font=\scriptsize, anchor=south west] at (3.65, 3.90)
+            {\textbf{\textcolor{green!45!black}{Leitura MAC (sentido horário)}}\\[2pt]
+             \texttt{idx\_leitura} parte de \texttt{idx\_recente}\\
+             \texttt{idx\_leitura = idx\_leitura + 1}\\
+             ($k = 1 \dots N$, com retorno circular).};
 
-        % Texto central do anel
-        \node[align=center, font=\scriptsize] at (0,0)
-            {\textbf{Buffer Circular}\\\textbf{de tamanho $N = 23$}\\[3pt]Numeração horária\\$1 \rightarrow 2 \rightarrow \cdots \rightarrow N$\\[2pt]$y[n] = \sum_{k=1}^{N} h[k]\,\text{buf}(\text{idx\_leitura})$};
+        % Texto central do anel (ajustado para caber com folga dentro de R_in = 2.15cm)
+        \node[align=center, font=\footnotesize] at (0,0)
+            {\textbf{Buffer Circular}\\
+             \textbf{($N = 23$ posições)}\\[4pt]
+             {\scriptsize Numeração horária:}\\
+             {\scriptsize $1 \rightarrow 2 \rightarrow \cdots \rightarrow N$}\\[4pt]
+             {\scriptsize $y[n] = \displaystyle\sum_{k=1}^{N} h[k]\,\text{buf}(\text{idx\_leitura})$}};
+
+        % --- 2. VISÃO LINEAR EQUIVALENTE DAS POSIÇÕES FÍSICAS E MAPEAMENTO MAC ---
+        \node[font=\footnotesize\bfseries, text=gray!85!black] at (0, -5.00)
+            {Mapeamento Linear Equivalente no Instante $n$ (Sem Deslocamento de Memória)};
+
+        % Cabeçalhos das linhas à esquerda
+        \node[draw=gray!60, fill=gray!12, minimum width=1.65cm, minimum height=0.52cm, font=\scriptsize\bfseries] at (-6.825, -6.25) {Posição};
+        \node[draw=gray!60, fill=gray!12, minimum width=1.65cm, minimum height=0.60cm, font=\scriptsize\bfseries] at (-6.825, -6.81) {Conteúdo};
+        \node[draw=gray!60, fill=gray!12, minimum width=1.65cm, minimum height=0.52cm, font=\scriptsize\bfseries] at (-6.825, -7.37) {Peso MAC};
+
+        % 8 colunas representando as posições 1..N (cada coluna com largura 1.70cm)
+        \begin{scope}[
+            celpos/.style={draw=gray!60, minimum width=1.70cm, minimum height=0.52cm, font=\scriptsize\bfseries},
+            celsamp/.style={draw=gray!60, minimum width=1.70cm, minimum height=0.60cm, font=\scriptsize},
+            celcoef/.style={draw=gray!60, minimum width=1.70cm, minimum height=0.52cm, font=\scriptsize}
+        ]
+            % Pos. 1 (idx_recente)
+            \node[celpos,  fill=blue!14, text=blue!80!black] at (-5.15, -6.25) {Pos.\ $1$};
+            \node[celsamp, fill=blue!14]                     at (-5.15, -6.81) {$\mathbf{x[n]}$};
+            \node[celcoef, fill=blue!14]                     at (-5.15, -7.37) {$\times\, h[1]$};
+            % Pos. 2
+            \node[celpos,  fill=gray!5]  at (-3.45, -6.25) {Pos.\ $2$};
+            \node[celsamp, fill=gray!5]  at (-3.45, -6.81) {$x[n-1]$};
+            \node[celcoef, fill=gray!5]  at (-3.45, -7.37) {$\times\, h[2]$};
+            % Pos. 3
+            \node[celpos,  fill=gray!5]  at (-1.75, -6.25) {Pos.\ $3$};
+            \node[celsamp, fill=gray!5]  at (-1.75, -6.81) {$x[n-2]$};
+            \node[celcoef, fill=gray!5]  at (-1.75, -7.37) {$\times\, h[3]$};
+            % Pos. 4
+            \node[celpos,  fill=gray!5]  at (-0.05, -6.25) {Pos.\ $4$};
+            \node[celsamp, fill=gray!5]  at (-0.05, -6.81) {$x[n-3]$};
+            \node[celcoef, fill=gray!5]  at (-0.05, -7.37) {$\times\, h[4]$};
+            % Pos. 5
+            \node[celpos,  fill=gray!5]  at (1.65, -6.25)  {Pos.\ $5$};
+            \node[celsamp, fill=gray!5]  at (1.65, -6.81)  {$x[n-4]$};
+            \node[celcoef, fill=gray!5]  at (1.65, -7.37)  {$\times\, h[5]$};
+            % Reticências (...)
+            \node[celpos,  fill=gray!5, text=gray!70!black] at (3.35, -6.25) {$\cdots$};
+            \node[celsamp, fill=gray!5, text=gray!70!black] at (3.35, -6.81) {$\cdots$};
+            \node[celcoef, fill=gray!5, text=gray!70!black] at (3.35, -7.37) {$\cdots$};
+            % Pos. N-1
+            \node[celpos,  fill=gray!5]  at (5.05, -6.25)  {Pos.\ $N\!-\!1$};
+            \node[celsamp, fill=gray!5]  at (5.05, -6.81)  {$x[n\!-\!N\!+\!2]$};
+            \node[celcoef, fill=gray!5]  at (5.05, -7.37)  {$\times\, h[N\!-\!1]$};
+            % Pos. N (amostra mais antiga)
+            \node[celpos,  fill=red!10, text=red!75!black] at (6.75, -6.25) {Pos.\ $N$};
+            \node[celsamp, fill=red!10]                    at (6.75, -6.81) {$x[n\!-\!N\!+\!1]$};
+            \node[celcoef, fill=red!10]                    at (6.75, -7.37) {$\times\, h[N]$};
+        \end{scope}
+
+        % Seta de wrap-around de escrita (acima da tabela linear; usar text=red!75!black!)
+        \draw[->, thick, red!75!black, dashed] (-5.15, -5.99) -- (-5.15, -5.58) -- (6.75, -5.58) -- (6.75, -5.99);
+        \node[fill=white, inner sep=2pt, font=\scriptsize\bfseries, text=red!75!black] at (0.80, -5.58)
+            {Próxima escrita (\texttt{idx\_recente}): $1 \rightarrow N$ (\textit{wrap-around}) grava $x[n+1]$};
+
+        % Seta de percurso de leitura (abaixo da tabela linear)
+        \draw[->, thick, green!50!black] (-5.15, -7.88) -- (6.75, -7.88);
+        \node[below, font=\scriptsize\bfseries, text=green!45!black] at (0.80, -7.88)
+            {Percurso de leitura (\texttt{idx\_leitura}): $1 \rightarrow 2 \rightarrow \cdots \rightarrow N$ (acumula $y[n]$)};
     \end{tikzpicture}
     \end{adjustbox}
-    \caption{Etapa B: Esquema do buffer circular de $N = 23$ posições numeradas no sentido horário ($1 \dots N$), destacando o ponteiro da amostra mais recente (\texttt{idx\_recente}, em azul), o avanço anti-horário de escrita que sobrescreve a amostra mais antiga $x[n-N+1]$ (em vermelho tracejado) e o percurso horário do índice auxiliar de leitura (\texttt{idx\_leitura}, em verde) durante a soma de convolução.}
+    \caption{Etapa B: Esquema do buffer circular de $N = 23$ posições numeradas no sentido horário ($1 \dots N$) e seu mapeamento linear equivalente no instante $n$. Destacam-se o ponteiro da amostra mais recente (\texttt{idx\_recente}, em azul), o avanço anti-horário de escrita que sobrescreve a amostra mais antiga $x[n-N+1]$ (em vermelho tracejado) e o percurso horário do índice auxiliar de leitura (\texttt{idx\_leitura}, em verde) durante a soma de convolução.}
     \label{fig:tikz_buffer}
 \end{figure}
 
 \subsection{Resultados de Validação Temporal e Espectral}
 
-A validação funcional de \texttt{fir\_circular(x, h)} foi executada em dois cenários de teste (\texttt{src/etapa\_B\_validacao.m}), confrontando sua saída amostra a amostra com a função nativa \texttt{filter(h, 1, x)}:
+A validação funcional de \texttt{fir\_circular(x, h)} foi executada no script \texttt{src/\allowbreak etapa\_B\_validacao.m} em dois cenários de teste, confrontando sua saída amostra a amostra com a função nativa \texttt{filter(h, 1, x)}:
 \begin{enumerate}[leftmargin=1.5em, itemsep=2pt]
     \item \textbf{Teste 1 — Resposta ao Impulso Unitário:} Aplicou-se $\delta[n] = [1,\, 0,\, \dots,\, 0]$ com $L_{\text{imp}} = N + 20 = 43\text{ amostras}$ ($n = 0 \dots 42$). Conforme mostra a Figura~\ref{fig:B1_impulso}, a saída $y_{\text{circ}}[n]$ recupera com erro exatamente nulo ($\num{0,000000e+00}$) os $N = 23$ coeficientes de $h[k]$ nos instantes $n = 0 \dots 22$ e permanece identicamente igual a zero na cauda $n \ge 23$, comprovando a ausência de vazamento de índice ou erro de retorno circular (\textit{off-by-one}).
     \item \textbf{Teste 2 — Sinal Composto de Duas Senoides:} Aplicou-se $x[n] = \sin(2\pi \cdot 500n/F_s) + \sin(2\pi \cdot 3000n/F_s)$ durante $L_{\text{sen}} = 400\text{ amostras}$ ($\SI{50}{ms}$). A Figura~\ref{fig:B2_senoides} evidencia que, após o transitório inicial de $M = N - 1 = 22\text{ amostras}$ ($\SI{2,75}{ms}$, correspondente ao preenchimento completo do buffer circular), a componente de alta frequência em $f_2 = \SI{3000}{Hz}$ (banda de rejeição) é suprimida, restando na saída uma senoide pura de $f_1 = \SI{500}{Hz}$ (banda passante) com amplitude preservada e deslocada no tempo exatamente pelo atraso de grupo $\tau_g = \SI{11,0}{amostras}$ ($\SI{1,3750}{ms}$). O erro absoluto máximo entre \texttt{fir\_circular} e \texttt{filter} ao longo das $400\text{ amostras}$ é de $\MetricaBErroMaxSenFilter$ ($1,5\,\epsilon_{\text{mach}}$ em precisão \texttt{double} IEEE~754).
@@ -839,7 +911,10 @@ A Tabela~\ref{tab:D1_snr} apresenta todas as métricas de erro, potências de si
     \item \textbf{Explique por que não é correto atribuir toda variação de SNR exclusivamente à redução do ruído quando a própria potência do sinal útil também se altera.}
     Pela definição logarítmica da relação sinal-ruído na entrada e na saída em regime permanente, a variação $\Delta\text{SNR}$ decompõe-se algebricamente em duas parcelas independentes:
     \begin{equation}
-        \Delta\text{SNR}_{\text{dB}} = \text{SNR}_{\text{out,dB}} - \text{SNR}_{\text{in,dB}} = 10\log_{10}\!\left(\frac{P_{y,\text{ss}}}{P_{e_y,\text{ss}}}\right) - 10\log_{10}\!\left(\frac{P_x}{P_e}\right) = \underbrace{10\log_{10}\!\left(\frac{P_{y,\text{ss}}}{P_x}\right)}_{\Delta P_{\text{sinal,dB}}} - \underbrace{10\log_{10}\!\left(\frac{P_{e_y,\text{ss}}}{P_e}\right)}_{\Delta P_{\text{ruído,dB}}}.
+        \begin{aligned}
+            \Delta\text{SNR}_{\text{dB}} &= \text{SNR}_{\text{out,dB}} - \text{SNR}_{\text{in,dB}} = 10\log_{10}\!\left(\frac{P_{y,\text{ss}}}{P_{e_y,\text{ss}}}\right) - 10\log_{10}\!\left(\frac{P_x}{P_e}\right) \\
+            &= \underbrace{10\log_{10}\!\left(\frac{P_{y,\text{ss}}}{P_x}\right)}_{\Delta P_{\text{sinal,dB}}} - \underbrace{10\log_{10}\!\left(\frac{P_{e_y,\text{ss}}}{P_e}\right)}_{\Delta P_{\text{ruído,dB}}}.
+        \end{aligned}
         \label{eq:deltasnr}
     \end{equation}
     No \textbf{Caso 1}, como o sinal de entrada contém apenas a senoide de $\SI{500}{Hz}$ (situada na banda passante, onde $|H(\SI{500}{Hz})| = 0,99783632 \equiv \SI{-0,018814}{dB}$), a potência do sinal praticamente não se altera ($P_x = 0,320000 \to P_{y,\text{ss}} = 0,318617$, ou $\Delta P_{\text{sinal}} = \SI{-0,018814}{dB} \approx \SI{0}{dB}$), de modo que o ganho $\Delta\text{SNR}_1 = -0,018814 - (-9,046327) = \SI{+9,027513}{dB}$ reflete quase integralmente a supressão de $\SI{9,05}{dB}$ na potência do ruído de quantização.
@@ -861,7 +936,10 @@ Para ilustrar o crescimento de palavra na multiplicação em ponto fixo e os err
 \end{equation}
 O produto completo exato em $16\text{ bits}$ (\texttt{Q2.14}, com $14\text{ bits}$ fracionários) é dado por:
 \begin{equation}
-    p_{\text{exato}} = a \cdot b = \frac{79 \times 45}{128 \times 128} = \frac{3555}{16384} = \frac{27 + \frac{99}{128}}{128} = \frac{27,7734375}{128} = \MetricaEProdCompleto \;\; (\texttt{00.00110111100011}_2).
+    \begin{aligned}
+        p_{\text{exato}} = a \cdot b &= \frac{79 \times 45}{128 \times 128} = \frac{3555}{16384} = \frac{27 + \frac{99}{128}}{128} \\
+        &= \frac{27,7734375}{128} = \MetricaEProdCompleto \;\; (\texttt{00.00110111100011}_2).
+    \end{aligned}
 \end{equation}
 Ao reconverter $p_{\text{exato}}$ de \texttt{Q2.14} para \texttt{Q1.7}, os $7\text{ bits}$ menos significativos ($\texttt{1100011}_2 = 99/16384 = 0,7734375\text{ LSB}_{\text{Q1.7}}$) precisam ser descartados. A Tabela~\ref{tab:E1_ponto_fixo} compara o produto completo com os resultados obtidos por \textbf{arredondamento ao mais próximo} (\texttt{round}, que soma $+1\text{ LSB}$ pois a fração descartada $0,7734375 \ge 0,5\text{ LSB}$) e por \textbf{truncamento} em complemento de dois (\texttt{floor}, que simplesmente descarta os $7\text{ LSBs}$), além de sintetizar as métricas de crescimento de palavra no acumulador e o exemplo numérico de \textit{overflow} em adição \texttt{Q1.7}.
 

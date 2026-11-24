@@ -1,63 +1,133 @@
-% Diagrama TikZ autocontido do Buffer Circular FIR (Etapa B - Pratica 3 PDS)
-% Convencao do roteiro:
-%   - Posicoes 1..N numeradas no sentido horario
-%   - Escrita da nova amostra (idx_recente) avanca no sentido anti-horario
-%   - Leitura das amostras (idx_leitura) percorre no sentido horario a partir de idx_recente
+% Diagrama TikZ autocontido do Buffer Circular FIR (Etapa B - Prática 3 PDS)
+% Convenção do roteiro:
+%   - Posições 1..N numeradas no sentido horário
+%   - Escrita da nova amostra (idx_recente) avança no sentido anti-horário
+%   - Leitura das amostras (idx_leitura) percorre no sentido horário a partir de idx_recente
 \begin{tikzpicture}[>=stealth, font=\small, scale=1.0]
-    % Aneis de referencia do buffer circular
-    \draw[thick, fill=gray!5] (0,0) circle (2.8cm);
-    \draw[thick, fill=white]  (0,0) circle (1.55cm);
+    % --- 1. ANEL DO BUFFER CIRCULAR (R_in = 2.15cm, R_out = 3.90cm) ---
+    \draw[thick, fill=gray!5] (0,0) circle (3.90cm);
+    \draw[thick, fill=white]  (0,0) circle (2.15cm);
 
-    % Divisoes radiais das 8 celulas ilustrativas (representando 1..N)
+    % Divisões radiais das 8 células ilustrativas (representando 1..N)
     \foreach \ang in {22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5} {
-        \draw[thick, gray!70] (\ang:1.55cm) -- (\ang:2.8cm);
+        \draw[thick, gray!70] (\ang:2.15cm) -- (\ang:3.90cm);
     }
 
-    % Destaque colorido para a celula atual de idx_recente (posicao 1 no topo, 90 graus)
-    \fill[blue!15] (67.5:1.55cm) arc (67.5:112.5:1.55cm) -- (112.5:2.8cm) arc (112.5:67.5:2.8cm) -- cycle;
-    \draw[thick, blue!70!black] (67.5:1.55cm) arc (67.5:112.5:1.55cm) -- (112.5:2.8cm) arc (112.5:67.5:2.8cm) -- cycle;
+    % Destaque azul para a célula atual de idx_recente (Pos. 1 no topo, 90 graus)
+    \fill[blue!14] (67.5:2.15cm) arc (67.5:112.5:2.15cm) -- (112.5:3.90cm) arc (112.5:67.5:3.90cm) -- cycle;
+    \draw[thick, blue!70!black] (67.5:2.15cm) arc (67.5:112.5:2.15cm) -- (112.5:3.90cm) arc (112.5:67.5:3.90cm) -- cycle;
 
-    % Destaque suave para a celula mais antiga (posicao N a esquerda do topo, 135 graus),
-    % que sera sobrescrita no proximo passo anti-horario
-    \fill[red!10] (112.5:1.55cm) arc (112.5:157.5:1.55cm) -- (157.5:2.8cm) arc (157.5:112.5:2.8cm) -- cycle;
-    \draw[thick, red!60!black] (112.5:1.55cm) arc (112.5:157.5:1.55cm) -- (157.5:2.8cm) arc (157.5:112.5:2.8cm) -- cycle;
+    % Destaque vermelho para a célula mais antiga (Pos. N, 135 graus),
+    % que será sobrescrita no próximo passo anti-horário
+    \fill[red!10] (112.5:2.15cm) arc (112.5:157.5:2.15cm) -- (157.5:3.90cm) arc (157.5:112.5:3.90cm) -- cycle;
+    \draw[thick, red!60!black] (112.5:2.15cm) arc (112.5:157.5:2.15cm) -- (157.5:3.90cm) arc (157.5:112.5:3.90cm) -- cycle;
 
-    % Numeracao das posicoes no sentido horario (1, 2, 3, 4, 5, ..., N-1, N)
-    \node[font=\scriptsize\bfseries, blue!80!black] at (90:3.08cm)  {Pos.\ $1$};
-    \node[font=\scriptsize\bfseries, gray!80!black] at (45:3.08cm)  {Pos.\ $2$};
-    \node[font=\scriptsize\bfseries, gray!80!black] at (0:3.12cm)   {Pos.\ $3$};
-    \node[font=\scriptsize\bfseries, gray!80!black] at (-45:3.12cm) {Pos.\ $4$};
-    \node[font=\scriptsize\bfseries, gray!80!black] at (-90:3.08cm) {Pos.\ $5$};
-    \node[font=\scriptsize\bfseries, gray!80!black] at (-135:3.15cm){$\cdots$};
-    \node[font=\scriptsize\bfseries, gray!80!black] at (180:3.25cm) {Pos.\ $N\!-\!1$};
-    \node[font=\scriptsize\bfseries, red!75!black]  at (135:3.15cm) {Pos.\ $N$};
+    % Numeração das posições no sentido horário (com âncoras externas para nunca tocar o anel)
+    \node[anchor=south,      font=\footnotesize\bfseries, text=blue!80!black] at (90:4.02cm)   {Pos.\ $1$};
+    \node[anchor=south west, font=\footnotesize\bfseries, text=gray!80!black] at (45:4.00cm)   {Pos.\ $2$};
+    \node[anchor=west,       font=\footnotesize\bfseries, text=gray!80!black] at (0:4.02cm)    {Pos.\ $3$};
+    \node[anchor=north west, font=\footnotesize\bfseries, text=gray!80!black] at (-45:4.00cm)  {Pos.\ $4$};
+    \node[anchor=north,      font=\footnotesize\bfseries, text=gray!80!black] at (-90:4.02cm)  {Pos.\ $5$};
+    \node[anchor=north east, font=\footnotesize\bfseries, text=gray!80!black] at (-135:4.00cm) {$\cdots$};
+    \node[anchor=east,       font=\footnotesize\bfseries, text=gray!80!black] at (180:4.02cm)  {Pos.\ $N\!-\!1$};
+    \node[anchor=south east, font=\footnotesize\bfseries, text=red!75!black]  at (135:4.00cm)  {Pos.\ $N$};
 
-    % Conteudo das amostras armazenadas e coeficientes associados na leitura horaria
-    \node[align=center, font=\scriptsize] at (90:2.18cm)   {$\mathbf{x[n]}$\\[-1pt]{\tiny $\times h[1]$}};
-    \node[align=center, font=\scriptsize] at (45:2.18cm)   {$x[n\!-\!1]$\\[-1pt]{\tiny $\times h[2]$}};
-    \node[align=center, font=\scriptsize] at (0:2.18cm)    {$x[n\!-\!2]$\\[-1pt]{\tiny $\times h[3]$}};
-    \node[align=center, font=\scriptsize] at (-45:2.18cm)  {$x[n\!-\!3]$\\[-1pt]{\tiny $\times h[4]$}};
-    \node[align=center, font=\scriptsize] at (-90:2.18cm)  {$x[n\!-\!4]$\\[-1pt]{\tiny $\times h[5]$}};
-    \node[align=center, font=\scriptsize] at (-135:2.18cm) {$\ddots$};
-    \node[align=center, font=\scriptsize] at (180:2.18cm)  {$x[n\!-\!N\!+\!2]$\\[-1pt]{\tiny $\times h[N\!-\!1]$}};
-    \node[align=center, font=\scriptsize] at (135:2.18cm)  {$x[n\!-\!N\!+\!1]$\\[-1pt]{\tiny $\times h[N]$}};
+    % Conteúdo das amostras armazenadas e coeficientes associados na leitura horária (R_mid = 3.025cm)
+    \node[align=center, font=\footnotesize] at (90:3.025cm)   {$\mathbf{x[n]}$\\[1pt]{\scriptsize $\times\, h[1]$}};
+    \node[align=center, font=\footnotesize] at (45:3.025cm)   {$x[n-1]$\\[1pt]{\scriptsize $\times\, h[2]$}};
+    \node[align=center, font=\footnotesize] at (0:3.025cm)    {$x[n-2]$\\[1pt]{\scriptsize $\times\, h[3]$}};
+    \node[align=center, font=\footnotesize] at (-45:3.025cm)  {$x[n-3]$\\[1pt]{\scriptsize $\times\, h[4]$}};
+    \node[align=center, font=\footnotesize] at (-90:3.025cm)  {$x[n-4]$\\[1pt]{\scriptsize $\times\, h[5]$}};
+    \node[align=center, font=\footnotesize] at (-135:3.025cm) {$\cdots$};
+    \node[align=center, font=\scriptsize]   at (180:3.025cm)  {$x[n\!-\!N\!+\!2]$\\[1pt]{$\times\, h[N\!-\!1]$}};
+    \node[align=center, font=\scriptsize]   at (135:3.025cm)  {$x[n\!-\!N\!+\!1]$\\[1pt]{$\times\, h[N]$}};
 
     % Ponteiro da amostra mais recente (idx_recente)
-    \draw[->, ultra thick, blue!80!black] (90:4.15cm) -- (90:3.35cm);
-    \node[above, align=center, font=\footnotesize\bfseries, blue!80!black] at (90:4.15cm)
-        {\texttt{idx\_recente}\\{\scriptsize (amostra mais recente $x[n]$)}};
+    \draw[->, ultra thick, blue!80!black] (90:5.50cm) -- (90:4.58cm);
+    \node[above, align=center, font=\footnotesize\bfseries, text=blue!80!black] at (90:5.50cm)
+        {\texttt{idx\_recente}\\[-1pt]{\scriptsize (amostra mais recente $x[n]$)}};
 
-    % Seta anti-horaria de escrita (proxima posicao de escrita)
-    \draw[->, very thick, red!75!black, dashed] (100:3.65cm) arc (100:142:3.65cm);
-    \node[above left, align=right, font=\scriptsize\bfseries, red!75!black] at (132:3.75cm)
-        {Próxima escrita (sentido anti-horário)\\{\tiny \texttt{idx\_recente = idx\_recente - 1}}\\[-2pt]{\tiny (sobrescreve a amostra mais antiga $x[n\!-\!N\!+\!1]$)}};
+    % Seta anti-horária de escrita e caixa explicativa à esquerda
+    \draw[->, very thick, red!75!black, dashed] (106:4.85cm) arc (106:128:4.85cm);
+    \node[draw=red!60!black, fill=red!5, rounded corners=3pt, inner sep=5pt,
+          text width=4.35cm, align=left, font=\scriptsize, anchor=south east] at (-3.65, 3.90)
+        {\textbf{\textcolor{red!75!black}{Próxima escrita (anti-horário)}}\\[2pt]
+         \texttt{idx\_recente = idx\_recente - 1}\\
+         Sobrescreve a amostra mais antiga $x[n-N+1]$ na Pos.\ $N$.};
 
-    % Seta horaria de leitura (idx_leitura) na parte interna/externa direita
-    \draw[->, very thick, green!50!black] (80:3.65cm) arc (80:-35:3.65cm);
-    \node[above right, align=left, font=\scriptsize\bfseries, green!45!black] at (35:3.75cm)
-        {Leitura e acumulação MAC (sentido horário)\\{\tiny \texttt{idx\_leitura} parte de \texttt{idx\_recente} ($k = 1 \dots N$)}\\[-2pt]{\tiny \texttt{idx\_leitura = idx\_leitura + 1} (com retorno circular)}};
+    % Seta horária de leitura e caixa explicativa à direita
+    \draw[->, very thick, green!50!black] (74:4.95cm) arc (74:16:4.95cm);
+    \node[draw=green!50!black, fill=green!5, rounded corners=3pt, inner sep=5pt,
+          text width=4.45cm, align=left, font=\scriptsize, anchor=south west] at (3.65, 3.90)
+        {\textbf{\textcolor{green!45!black}{Leitura MAC (sentido horário)}}\\[2pt]
+         \texttt{idx\_leitura} parte de \texttt{idx\_recente}\\
+         \texttt{idx\_leitura = idx\_leitura + 1}\\
+         ($k = 1 \dots N$, com retorno circular).};
 
-    % Texto central do anel
-    \node[align=center, font=\scriptsize] at (0,0)
-        {\textbf{Buffer Circular}\\\textbf{de tamanho $N = 23$}\\[3pt]Numeração horária\\$1 \rightarrow 2 \rightarrow \cdots \rightarrow N$\\[2pt]$y[n] = \sum_{k=1}^{N} h[k]\,\text{buf}(\text{idx\_leitura})$};
+    % Texto central do anel (ajustado para caber com folga dentro de R_in = 2.15cm)
+    \node[align=center, font=\footnotesize] at (0,0)
+        {\textbf{Buffer Circular}\\
+         \textbf{($N = 23$ posições)}\\[4pt]
+         {\scriptsize Numeração horária:}\\
+         {\scriptsize $1 \rightarrow 2 \rightarrow \cdots \rightarrow N$}\\[4pt]
+         {\scriptsize $y[n] = \displaystyle\sum_{k=1}^{N} h[k]\,\text{buf}(\text{idx\_leitura})$}};
+
+    % --- 2. VISÃO LINEAR EQUIVALENTE DAS POSIÇÕES FÍSICAS E MAPEAMENTO MAC ---
+    \node[font=\footnotesize\bfseries, text=gray!85!black] at (0, -5.00)
+        {Mapeamento Linear Equivalente no Instante $n$ (Sem Deslocamento de Memória)};
+
+    % Cabeçalhos das linhas à esquerda
+    \node[draw=gray!60, fill=gray!12, minimum width=1.65cm, minimum height=0.52cm, font=\scriptsize\bfseries] at (-6.825, -6.25) {Posição};
+    \node[draw=gray!60, fill=gray!12, minimum width=1.65cm, minimum height=0.60cm, font=\scriptsize\bfseries] at (-6.825, -6.81) {Conteúdo};
+    \node[draw=gray!60, fill=gray!12, minimum width=1.65cm, minimum height=0.52cm, font=\scriptsize\bfseries] at (-6.825, -7.37) {Peso MAC};
+
+    % 8 colunas representando as posições 1..N (cada coluna com largura 1.70cm)
+    \begin{scope}[
+        celpos/.style={draw=gray!60, minimum width=1.70cm, minimum height=0.52cm, font=\scriptsize\bfseries},
+        celsamp/.style={draw=gray!60, minimum width=1.70cm, minimum height=0.60cm, font=\scriptsize},
+        celcoef/.style={draw=gray!60, minimum width=1.70cm, minimum height=0.52cm, font=\scriptsize}
+    ]
+        % Pos. 1 (idx_recente)
+        \node[celpos,  fill=blue!14, text=blue!80!black] at (-5.15, -6.25) {Pos.\ $1$};
+        \node[celsamp, fill=blue!14]                     at (-5.15, -6.81) {$\mathbf{x[n]}$};
+        \node[celcoef, fill=blue!14]                     at (-5.15, -7.37) {$\times\, h[1]$};
+        % Pos. 2
+        \node[celpos,  fill=gray!5]  at (-3.45, -6.25) {Pos.\ $2$};
+        \node[celsamp, fill=gray!5]  at (-3.45, -6.81) {$x[n-1]$};
+        \node[celcoef, fill=gray!5]  at (-3.45, -7.37) {$\times\, h[2]$};
+        % Pos. 3
+        \node[celpos,  fill=gray!5]  at (-1.75, -6.25) {Pos.\ $3$};
+        \node[celsamp, fill=gray!5]  at (-1.75, -6.81) {$x[n-2]$};
+        \node[celcoef, fill=gray!5]  at (-1.75, -7.37) {$\times\, h[3]$};
+        % Pos. 4
+        \node[celpos,  fill=gray!5]  at (-0.05, -6.25) {Pos.\ $4$};
+        \node[celsamp, fill=gray!5]  at (-0.05, -6.81) {$x[n-3]$};
+        \node[celcoef, fill=gray!5]  at (-0.05, -7.37) {$\times\, h[4]$};
+        % Pos. 5
+        \node[celpos,  fill=gray!5]  at (1.65, -6.25)  {Pos.\ $5$};
+        \node[celsamp, fill=gray!5]  at (1.65, -6.81)  {$x[n-4]$};
+        \node[celcoef, fill=gray!5]  at (1.65, -7.37)  {$\times\, h[5]$};
+        % Reticências (...)
+        \node[celpos,  fill=gray!5, text=gray!70!black] at (3.35, -6.25) {$\cdots$};
+        \node[celsamp, fill=gray!5, text=gray!70!black] at (3.35, -6.81) {$\cdots$};
+        \node[celcoef, fill=gray!5, text=gray!70!black] at (3.35, -7.37) {$\cdots$};
+        % Pos. N-1
+        \node[celpos,  fill=gray!5]  at (5.05, -6.25)  {Pos.\ $N\!-\!1$};
+        \node[celsamp, fill=gray!5]  at (5.05, -6.81)  {$x[n\!-\!N\!+\!2]$};
+        \node[celcoef, fill=gray!5]  at (5.05, -7.37)  {$\times\, h[N\!-\!1]$};
+        % Pos. N (amostra mais antiga)
+        \node[celpos,  fill=red!10, text=red!75!black] at (6.75, -6.25) {Pos.\ $N$};
+        \node[celsamp, fill=red!10]                    at (6.75, -6.81) {$x[n\!-\!N\!+\!1]$};
+        \node[celcoef, fill=red!10]                    at (6.75, -7.37) {$\times\, h[N]$};
+    \end{scope}
+
+    % Seta de wrap-around de escrita (acima da tabela linear; usar text=red!75!black!)
+    \draw[->, thick, red!75!black, dashed] (-5.15, -5.99) -- (-5.15, -5.58) -- (6.75, -5.58) -- (6.75, -5.99);
+    \node[fill=white, inner sep=2pt, font=\scriptsize\bfseries, text=red!75!black] at (0.80, -5.58)
+        {Próxima escrita (\texttt{idx\_recente}): $1 \rightarrow N$ (\textit{wrap-around}) grava $x[n+1]$};
+
+    % Seta de percurso de leitura (abaixo da tabela linear)
+    \draw[->, thick, green!50!black] (-5.15, -7.88) -- (6.75, -7.88);
+    \node[below, font=\scriptsize\bfseries, text=green!45!black] at (0.80, -7.88)
+        {Percurso de leitura (\texttt{idx\_leitura}): $1 \rightarrow 2 \rightarrow \cdots \rightarrow N$ (acumula $y[n]$)};
 \end{tikzpicture}

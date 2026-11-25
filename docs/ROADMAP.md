@@ -446,6 +446,7 @@ Filtro-FIR/
 ---
 
 ### Fase 9 — Revisão Final e Empacotamento da Entrega
+- [x] Criar apresentação de slides 100% editável diretamente no Google Apresentações via `gslides` CLI (15 slides com diagramas, tabelas, equações e notas do apresentador nativos, além dos 8 gráficos científicos de `figures/*.png`) e exportar cópia `.pptx` para `slides/Apresentacao_Pratica3_Filtro_FIR.pptx`.
 - [ ] Auditar o relatório (`report/main.tex` / PDF) e a apresentação de slides editável (`slides/Apresentacao_Pratica3_Filtro_FIR.pptx`) quanto à fidelidade numérica contra `results/`, linguagem alinhada às aulas (`docs/Aula_12.pdf`–`Aula_17.pdf`), referências técnicas e clareza visual.
 - [ ] Montar pasta `entrega/` contendo:
   - Relatório final em PDF (`Relatorio_Pratica3_Filtro_FIR.pdf`).
@@ -453,6 +454,12 @@ Filtro-FIR/
   - Todos os scripts `.m` necessários (`main.m`, `config_specs.m`, `fir_circular.m`, `etapa_*.m`, `utils/*.m`), devidamente comentados com variáveis e unidades explícitas.
   - Arquivos `.mat` (`coeficientes_FIR.mat`, `coeficientes_equiripple.mat`).
 - [ ] Testar a reprodução limpa dentro da própria pasta `entrega/` (abrir MATLAB nela e rodar `main.m` do zero) garantindo que tudo execute sem erros ou caminhos quebrados.
+
+> **Registro da Apresentação de Slides (Fase 9 — Parcial):**
+> - **`PRESENTATION_ID`:** `1jgJ13fx_Wa6nsiORit5Th3BtASF6rdM6Ue8NGcIgLfY`
+> - **Link direto (Google Apresentações):** `https://docs.google.com/presentation/d/1jgJ13fx_Wa6nsiORit5Th3BtASF6rdM6Ue8NGcIgLfY/edit`
+> - **Cópia local `.pptx`:** `slides/Apresentacao_Pratica3_Filtro_FIR.pptx` (`3.412.628 bytes`, exportada via `gslides readonly export`)
+> - **Escopo validado:** 15 slides inspecionados visualmente via `gslides readonly export-thumbnail` (zero cortes, zero sobreposições, 100% editável nativamente).
 
 ---
 

@@ -401,17 +401,19 @@ Filtro-FIR/
 ### Fase 8 — Escrita e Formatação do Relatório em LaTeX [CONCLUÍDA]
 **Diretório:** `report/` (`report/main.tex`)
 
-- [x] Redação integral de `report/main.tex` em arquivo único autocontido em português (`babel` `brazil`, `booktabs`, `siunitx`, `listings` UTF-8, `graphicx` com `\graphicspath{{./figures/}{../figures/}{./}}` e `tikz` embutido) com cabeçalho institucional do SENAI CIMATEC.
+- [x] Redação integral de `report/main.tex` em arquivo único autocontido em português (`babel` `brazil`, `booktabs`, `siunitx`, `listings` UTF-8, `graphicx` com `\graphicspath{{./figures/}{../figures/}{./}}`, `placeins` e `tikz` embutido) com cabeçalho institucional do SENAI CIMATEC.
+- [x] Alinhamento teórico e terminológico integral com as notas de aula da disciplina (`docs/Aula_12.pdf` a `docs/Aula_17.pdf`) e referências bibliográficas externas verificadas (Diniz/da Silva/Netto, Oppenheim/Schafer, Lyons, Manolakis/Ingle e MathWorks), incluindo seção final `\begin{thebibliography}` (`Referências`) com 12 entradas citadas no corpo do texto.
 - [x] Incorporação exata de todas as métricas oficiais de `results/metricas_relatorio.tex` e das 9 tabelas geradas a partir dos CSVs de `results/`, sem qualquer arredondamento arbitrário.
 - [x] Inclusão das 8 figuras vetoriais PDF de `figures/` + diagrama TikZ embutido do buffer circular (`fig:tikz_buffer`) + listagem do núcleo essencial de `src/fir_circular.m` (`lst:fir_circular`).
-- [x] Redação completa das respostas interpretativas de todas as etapas (Etapa A, Etapa A2, Etapa B, 7 questões da Etapa C, 4 questões da Etapa D, questões conceituais da Etapa E) e da Conclusão Técnica diferenciando explicitamente os 5 eixos obrigatórios (`(i)` a `(v)`).
+- [x] Redação completa das respostas interpretativas de todas as etapas (Etapa A, Etapa A2, Etapa B, 7 questões da Etapa C, 4 questões da Etapa D, questões conceituais da Etapa E) e da Conclusão Técnica diferenciando explicitamente os 5 eixos obrigatórios (`(i)` a `(v)`), com layout dimensionado para a faixa alvo de 15–20 páginas.
 
-> **Resumo da Validação do Relatório LaTeX (Fase 8):**
-> - **Arquivo gerado:** `report/main.tex` (autocontido, zero dependências de `\input` externo).
-> - **Auditoria sintática e numérica automatizada:**
->   - Balanceamento 100% verificado de ambientes `\begin{...}`/`\end{...}`, chaves `{}` e delimitadores matemáticos `$...$`.
->   - 23 referências cruzadas (`\label` / `\ref` / `\eqref`) verificadas 1-para-1 (9 tabelas, 9 figuras incluindo TikZ, 1 listagem e 4 equações numeradas).
->   - 8 arquivos de figura `.pdf` confirmados em `figures/` e 46 valores numéricos chave auditados contra `results/`.
+> **Resumo da Validação do Relatório LaTeX (Fase 8 — Conciso e Compilado via BasicTeX `pdflatex`):**
+> - **Arquivos gerados:** `report/main.tex` (autocontido, zero dependências de `\input` externo) e `report/main.pdf` (**16 páginas**, com a seção de **Referências isolada na página 16** via `\clearpage`, compilado em 2 passadas com `/Library/TeX/texbin/pdflatex`, TeX Live 2026 BasicTeX).
+> - **Auditoria sintática, visual, numérica e teórica automatizada:**
+>   - Zero erros, zero `Overfull`/`Underfull \hbox` e zero referências indefinidas na compilação `pdflatex`.
+>   - Alinhamento auditado slide a slide contra os 6 PDFs de aula do Prof. Elio Pithon Sarno Filho (`docs/Aula_12.pdf` a `docs/Aula_17.pdf`), incorporando terminologia, exemplos (como $h[5] = 0{,}02390682 \to 3/128$ da Aula 17) e referências padronizadas.
+>   - 51 macros `\Metrica...` sincronizadas 1-para-1 com `results/metricas_relatorio.tex` e varredura completa $N = 15 \dots 45$ validada contra `results/tab_A1_varredura_N.csv`.
+>   - Todas as referências cruzadas (`\label` / `\ref` / `\eqref` de 9 tabelas, 9 figuras incluindo TikZ, 1 listagem e equações) e as 12 entradas bibliográficas (`\bibitem` / `\cite`) verificadas 1-para-1.
 > - **Instruções de compilação no Overleaf:**
 >   1. Criar um novo projeto em branco no Overleaf (compilador `pdfLaTeX`).
 >   2. Enviar `report/main.tex` para a raiz do projeto no Overleaf.
@@ -444,11 +446,20 @@ Filtro-FIR/
 ---
 
 ### Fase 9 — Revisão Final e Empacotamento da Entrega
+- [x] Criar apresentação de slides 100% editável diretamente no Google Apresentações via `gslides` CLI (13 slides enxutos focados nos resultados e com os 8 gráficos científicos de `figures/*.png` em destaque, além de tabelas e notas do apresentador nativos) e exportar cópia `.pptx` para `slides/Apresentacao_Pratica3_Filtro_FIR.pptx`.
+- [ ] Auditar o relatório (`report/main.tex` / PDF) e a apresentação de slides editável (`slides/Apresentacao_Pratica3_Filtro_FIR.pptx`) quanto à fidelidade numérica contra `results/`, linguagem alinhada às aulas (`docs/Aula_12.pdf`–`Aula_17.pdf`), referências técnicas e clareza visual.
 - [ ] Montar pasta `entrega/` contendo:
   - Relatório final em PDF (`Relatorio_Pratica3_Filtro_FIR.pdf`).
+  - Apresentação de slides totalmente editável (`Apresentacao_Pratica3_Filtro_FIR.pptx`).
   - Todos os scripts `.m` necessários (`main.m`, `config_specs.m`, `fir_circular.m`, `etapa_*.m`, `utils/*.m`), devidamente comentados com variáveis e unidades explícitas.
   - Arquivos `.mat` (`coeficientes_FIR.mat`, `coeficientes_equiripple.mat`).
 - [ ] Testar a reprodução limpa dentro da própria pasta `entrega/` (abrir MATLAB nela e rodar `main.m` do zero) garantindo que tudo execute sem erros ou caminhos quebrados.
+
+> **Registro da Apresentação de Slides (Fase 9 — Parcial, Revisada para Foco em Resultados):**
+> - **`PRESENTATION_ID`:** `1jgJ13fx_Wa6nsiORit5Th3BtASF6rdM6Ue8NGcIgLfY` *(cópia de segurança v1: `1nBLqtcAPUeI9TcxevG3WM8nur2TtpLl2y2hw2VHm0VI`)*
+> - **Link direto (Google Apresentações):** `https://docs.google.com/presentation/d/1jgJ13fx_Wa6nsiORit5Th3BtASF6rdM6Ue8NGcIgLfY/edit`
+> - **Cópia local `.pptx`:** `slides/Apresentacao_Pratica3_Filtro_FIR.pptx` (`3.401.266 bytes`, exportada via `gslides readonly export`)
+> - **Escopo validado:** 13 slides enxutos inspecionados visualmente via `gslides readonly export-thumbnail` (zero cortes, zero sobreposições, 8 gráficos MATLAB em tamanho protagonista e 100% editável nativamente).
 
 ---
 

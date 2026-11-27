@@ -16,8 +16,8 @@ function resultado_B = etapa_B_validacao()
 %       4. Verificacao em frequencia via freqz: calcular os ganhos exatos em
 %          500 Hz e 3.000 Hz (escala linear e dB) e confrontar com os limites
 %          da mascara de especificacoes (avaliar_mascara.m).
-%       5. Exportar a tabela consolidada results/tab_B1_erros_e_ganhos.csv e
-%          gerar o diagrama TikZ results/tikz_buffer_circular.tex.
+%       5. Exportar a tabela consolidada results/tab_B1_erros_e_ganhos.csv
+%          (o diagrama TikZ do buffer circular fica embutido em report/main.tex).
 %       6. Gerar e exportar via salvar_figura as figuras
 %          fig_B1_impulso_comparacao e fig_B2_senoides_temporal (.pdf e .png).
 %
@@ -307,7 +307,6 @@ close(fig_B2);
 
 fprintf('Arquivos gerados com sucesso:\n');
 fprintf('  - %s\n', caminho_tab_B1);
-fprintf('  - %s\n', fullfile(specs.caminhos.results, 'tikz_buffer_circular.tex'));
 fprintf('  - %s (.pdf e .png)\n', fullfile(specs.caminhos.figures, 'fig_B1_impulso_comparacao'));
 fprintf('  - %s (.pdf e .png)\n\n', fullfile(specs.caminhos.figures, 'fig_B2_senoides_temporal'));
 

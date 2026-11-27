@@ -146,6 +146,18 @@ aten_stop_min_dB      = aval_final.aten_stop_min_dB;    % Atenuacao minima na ba
 ganho_dc_dB           = aval_final.ganho_dc_dB;         % Ganho em corrente continua [dB]
 atende_mascara        = aval_final.atende_mascara;      % Status final de atendimento [logico]
 
+% Conferencia independente sugerida na Aula 18 (ferramentas complementares):
+% - fir1 com janela de Hamming gera a referencia do projeto por serie de Fourier
+%   e janelamento (fir1 tambem normaliza o ganho DC para 1);
+% - grpdelay mede numericamente o atraso de grupo na banda passante.
+h_fir1        = fir1(ordem, fc / (Fs / 2), hamming(N)); % Coeficientes de referencia via fir1 [adimensional]
+erro_max_fir1 = max(abs(h - h_fir1));                   % Erro maximo entre h proprio e fir1 [adimensional]
+
+[atraso_gd_amostras, f_gd_Hz] = grpdelay(h, 1, specs.Nfft, Fs); % Atraso de grupo medido [amostras] e frequencias [Hz]
+idx_pass_gd          = (f_gd_Hz <= Fpass);                        % Pontos da banda passante [logico]
+atraso_gd_medio      = mean(atraso_gd_amostras(idx_pass_gd));      % Atraso de grupo medio na passante [amostras]
+desvio_gd_max        = max(abs(atraso_gd_amostras(idx_pass_gd) - atraso_grupo_amostras)); % Desvio maximo em relacao a M/2 [amostras]
+
 fprintf('\n----------------------------------------------------------------------\n');
 fprintf('RESULTADO FINAL SELECIONADO (ETAPA A):\n');
 fprintf('  Menor comprimento que atende a mascara : N = %d coeficientes\n', N);
@@ -155,6 +167,9 @@ fprintf('  Atenuacao minima na banda de rejeicao  : %.4f dB (limite >= %.2f dB)\
 fprintf('  Soma dos coeficientes sum(h)           : %.16f (Ganho DC = %.4e dB)\n', soma_coef, ganho_dc_dB);
 fprintf('  Erro maximo de simetria                : %.4e\n', erro_simetria_max);
 fprintf('  Atraso de grupo                        : %.1f amostras (%.4f ms)\n', atraso_grupo_amostras, atraso_grupo_ms);
+fprintf('  Erro maximo |h - fir1(M, fc, hamming)| : %.6e\n', erro_max_fir1);
+fprintf('  Atraso de grupo medido (grpdelay)      : %.6f amostras na passante (desvio max = %.6e)\n', ...
+    atraso_gd_medio, desvio_gd_max);
 fprintf('----------------------------------------------------------------------\n');
 
 % Exporta tabela de metricas finais da Etapa A
@@ -175,7 +190,10 @@ Parametro = [
     "Ganho DC";
     "Erro maximo de simetria max|h[k] - h[N-1-k]|";
     "Atraso de grupo (amostras)";
-    "Atraso de grupo (tempo)"
+    "Atraso de grupo (tempo)";
+    "Erro maximo em relacao a fir1 (Hamming)";
+    "Atraso de grupo medio medido (grpdelay, passante)";
+    "Desvio maximo do atraso medido em relacao a M/2"
     ];
 Valor = [
     Fs;
@@ -194,7 +212,10 @@ Valor = [
     ganho_dc_dB;
     erro_simetria_max;
     atraso_grupo_amostras;
-    atraso_grupo_ms
+    atraso_grupo_ms;
+    erro_max_fir1;
+    atraso_gd_medio;
+    desvio_gd_max
     ];
 Unidade = [
     "Hz";
@@ -213,7 +234,10 @@ Unidade = [
     "dB";
     "adimensional";
     "amostras";
-    "ms"
+    "ms";
+    "adimensional";
+    "amostras";
+    "amostras"
     ];
 
 tab_A2 = table(Parametro, Valor, Unidade);
@@ -376,6 +400,9 @@ resultado_A.ganho_dc_dB           = ganho_dc_dB;
 resultado_A.atende_mascara        = atende_mascara;
 resultado_A.tab_A1                = tab_A1;
 resultado_A.tab_A2                = tab_A2;
+resultado_A.erro_max_fir1         = erro_max_fir1;
+resultado_A.atraso_gd_medio       = atraso_gd_medio;
+resultado_A.desvio_gd_max         = desvio_gd_max;
 end
 
 %% Funcao Local de Sintese por Serie de Fourier e Janela de Hamming

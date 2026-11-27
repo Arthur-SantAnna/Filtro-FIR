@@ -461,6 +461,15 @@ Filtro-FIR/
 > - **Cópia local `.pptx`:** `slides/Apresentacao_Pratica3_Filtro_FIR.pptx` (`3.401.266 bytes`, exportada via `gslides readonly export`)
 > - **Escopo validado:** 13 slides enxutos inspecionados visualmente via `gslides readonly export-thumbnail` (zero cortes, zero sobreposições, 8 gráficos MATLAB em tamanho protagonista e 100% editável nativamente).
 
+> **Revisão com a Aula 18 (27/11/2026) — PENDENTE DE EXECUÇÃO NO MATLAB:**
+> - [x] Scripts estendidos: `etapa_A_janelamento.m` (conferência com `fir1` + `grpdelay`), `etapa_C_quant_coef.m` (`sum(abs(hQ))` em Q1.15/Q1.7), `etapa_E_ponto_fixo.m` (amplitude máxima de entrada K/128, escalonamento por `1/sum(abs(h))` verificado nos coeficientes armazenados, momento do arredondamento; nova tabela `results/tab_E2_limite_amplitude.csv`) e `main.m` (novas macros e auditoria).
+> - [x] `report/main.tex` e `report/main_v02.tex` atualizados (ainda **não** unificados): conferência `fir1`/`grpdelay`, parâmetros do Filter Designer (Apass = 0,2 dB), teste de retorno do ponteiro, `sum(abs(hQ))`, escolha de Q1.15, amplitude máxima, escalonamento, momento do arredondamento, peso −1 do bit de sinal, referência à Aula 18.
+> - [x] `src/main.m` executado no MATLAB Online (27/11/2026, pasta `MATLAB Drive/PDS/Filtro_FIR_A18`) e macros preenchidas nos dois relatórios. Valores-chave: `fir1` difere de h em 5,55e-17; `grpdelay` = 11,000000 amostras (desvio 0); sum|hQ| = 1,47332764 (Q1.15) / 1,47656250 (Q1.7); K_max = 86 → |x| ≤ 86/128 = 0,671875 (pico 126,712 / 128,185 passos); h/sum|h| → ganho DC 0,678704 (−3,3664 dB); escalonado em Q1.7: sum|hq| = 129/128, sum(hq) = 89/128 (−3,1564 dB), pico 0,9999390 > 127/128 (ainda há overflow); exemplo da aula 10/128 (Q por ramo) vs 9/128 (Q após soma); limites 0,08984375 vs 0,00390625.
+> - [x] Fusão concluída em `report/main.tex` (27/11/2026): texto do `main_v02.tex` como base, com a varredura completa N = 15 a 45, o detalhe dos zeros no Filter Designer, a bibliografia formal com `\cite` (13 itens, incluindo a Aula 18) e a Etapa E enxugada (~1 página). Compila sem erros (20 páginas). `report/main_v02.tex` mantido sem alterações, como referência.
+> - [ ] Sincronizar a pasta `results/` local com a execução do MATLAB Online (hoje só os relatórios têm os valores novos; `results/tab_E2_limite_amplitude.csv` não existe localmente).
+> - [ ] Observação: no MATLAB Online, o erro máximo das senoides da Etapa B saiu 4,440892e-16 (local: 3,330669e-16; diferença de 1 ulp entre versões). Os relatórios mantêm o valor local.
+> - [x] Corrigido (27/11/2026): `main.m` exigia `results/tikz_buffer_circular.tex`, que nenhum script gera (o diagrama TikZ fica embutido em `report/main.tex`). O arquivo saiu da lista de verificação do `main.m` e da Etapa B; validado no MATLAB Online a partir de `results/` e `figures/` vazios (29 arquivos OK, 117 s).
+
 ---
 
 ## 5. Cronograma Sugerido (23/11/2026 → 02/12/2026)

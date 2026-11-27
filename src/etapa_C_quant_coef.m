@@ -113,6 +113,13 @@ soma_orig = sum(h);      % Soma dos coeficientes originais [adimensional]
 soma_Q17  = sum(h_Q17);  % Soma dos coeficientes quantizados em Q1.7 [adimensional]
 soma_Q115 = sum(h_Q115); % Soma dos coeficientes quantizados em Q1.15 [adimensional]
 
+% Soma dos modulos (norma L1) dos coeficientes efetivamente armazenados.
+% A Aula 18 recomenda conferir sum(abs(hq)) para o limite de pico da saida,
+% sum(hq) para o ganho DC e freqz(hq,1,...) para a mascara.
+soma_abs_orig = sum(abs(h));      % Norma L1 dos coeficientes originais [adimensional]
+soma_abs_Q17  = sum(abs(h_Q17));  % Norma L1 dos coeficientes quantizados em Q1.7 [adimensional]
+soma_abs_Q115 = sum(abs(h_Q115)); % Norma L1 dos coeficientes quantizados em Q1.15 [adimensional]
+
 erro_sim_orig = max(abs(h      - fliplr(h)));      % Erro maximo de simetria no original [adimensional]
 erro_sim_Q17  = max(abs(h_Q17  - fliplr(h_Q17)));  % Erro maximo de simetria em Q1.7 [adimensional]
 erro_sim_Q115 = max(abs(h_Q115 - fliplr(h_Q115))); % Erro maximo de simetria em Q1.15 [adimensional]
@@ -148,6 +155,7 @@ EQM = [eqm_orig; eqm_Q115; eqm_Q17]; % Erro quadratico medio [adimensional^2]
 Coefs_Zerados = [num_zeros_orig; num_zeros_Q115; num_zeros_Q17]; % Quantidade de coeficientes zerados [coeficientes]
 Erro_Max_Simetria = [erro_sim_orig; erro_sim_Q115; erro_sim_Q17]; % Erro maximo de simetria [adimensional]
 Soma_Coeficientes = [soma_orig; soma_Q115; soma_Q17]; % Soma dos coeficientes [adimensional]
+Soma_Modulos = [soma_abs_orig; soma_abs_Q115; soma_abs_Q17]; % Norma L1 sum(|hQ[k]|) [adimensional]
 Ganho_DC_dB = [aval_orig.ganho_dc_dB; aval_Q115.ganho_dc_dB; aval_Q17.ganho_dc_dB]; % Ganho DC [dB]
 Desvio_Pass_Max_dB = [aval_orig.desvio_pass_max_dB; aval_Q115.desvio_pass_max_dB; aval_Q17.desvio_pass_max_dB]; % Desvio maximo na passante [dB]
 Aten_Stop_Min_dB = [aval_orig.aten_stop_min_dB; aval_Q115.aten_stop_min_dB; aval_Q17.aten_stop_min_dB]; % Atenuacao minima na rejeicao [dB]
@@ -157,7 +165,7 @@ Atende_Mascara = [aval_orig.atende_mascara; aval_Q115.atende_mascara; aval_Q17.a
 
 tab_C2 = table(Versao, Bits_Fracionarios, Passo_Delta, Limite_Meio_Delta, ...
     Erro_Abs_Max, EQM, Coefs_Zerados, Erro_Max_Simetria, ...
-    Soma_Coeficientes, Ganho_DC_dB, Desvio_Pass_Max_dB, Aten_Stop_Min_dB, ...
+    Soma_Coeficientes, Soma_Modulos, Ganho_DC_dB, Desvio_Pass_Max_dB, Aten_Stop_Min_dB, ...
     Atende_Pass, Atende_Stop, Atende_Mascara);
 caminho_tab_C2 = fullfile(specs.caminhos.results, 'tab_C2_metricas_quant_coef.csv');
 writetable(tab_C2, caminho_tab_C2);
@@ -178,8 +186,10 @@ fprintf('  - Q1.7 : Coeficientes quantizados para zero (%d): k = [%s]\n', ...
     num_zeros_Q17, num2str(idx_zeros_Q17_k));
 fprintf('  - Q1.15: Maior erro absoluto = %.6e (limite Delta/2 = %.6e) em k = %d (e simetrico k = %d)\n', ...
     erro_abs_max_Q115, meio_delta_Q115, idx_max_Q115 - 1, N - idx_max_Q115);
-fprintf('  - Q1.15: Coeficientes quantizados para zero (%d): k = [%s]\n\n', ...
+fprintf('  - Q1.15: Coeficientes quantizados para zero (%d): k = [%s]\n', ...
     num_zeros_Q115, num2str(idx_zeros_Q115_k));
+fprintf('  - Norma L1 sum(|h|): Original = %.8f | Q1.15 = %.8f | Q1.7 = %.8f\n\n', ...
+    soma_abs_orig, soma_abs_Q115, soma_abs_Q17);
 
 %% 6. Geracao da Figura fig_C1_respostas_quant_coef (Visao Global + Ampliacoes)
 f_Hz        = aval_orig.f_Hz;   % Vetor de frequencia [Hz]
@@ -296,6 +306,9 @@ resultado_C.idx_zeros_Q115_k   = idx_zeros_Q115_k;
 resultado_C.soma_orig          = soma_orig;
 resultado_C.soma_Q17           = soma_Q17;
 resultado_C.soma_Q115          = soma_Q115;
+resultado_C.soma_abs_orig      = soma_abs_orig;
+resultado_C.soma_abs_Q17       = soma_abs_Q17;
+resultado_C.soma_abs_Q115      = soma_abs_Q115;
 resultado_C.erro_sim_orig      = erro_sim_orig;
 resultado_C.erro_sim_Q17       = erro_sim_Q17;
 resultado_C.erro_sim_Q115      = erro_sim_Q115;

@@ -16,8 +16,8 @@ function resultado_B = etapa_B_validacao()
 %       4. Verificacao em frequencia via freqz: calcular os ganhos exatos em
 %          500 Hz e 3.000 Hz (escala linear e dB) e confrontar com os limites
 %          da mascara de especificacoes (avaliar_mascara.m).
-%       5. Exportar a tabela consolidada results/tab_B1_erros_e_ganhos.csv e
-%          gerar o diagrama TikZ results/tikz_buffer_circular.tex.
+%       5. Exportar a tabela consolidada results/tab_B1_erros_e_ganhos.csv
+%          (o diagrama TikZ do buffer circular fica embutido em report/main.tex).
 %       6. Gerar e exportar via salvar_figura as figuras
 %          fig_B1_impulso_comparacao e fig_B2_senoides_temporal (.pdf e .png).
 %
@@ -71,9 +71,12 @@ delta            = [1, zeros(1, L_imp - 1)];  % Sinal impulso unitario discreto 
 
 y_circ_imp = fir_circular(delta, h);          % Saida obtida com buffer circular [amplitude]
 y_filt_imp = filter(h, 1, delta);             % Saida de referencia obtida com filter() [amplitude]
+y_conv_imp = conv(delta, h);                  % Convolucao completa com cauda adicional de M amostras [amplitude]
 
 erro_imp_filter_vet = abs(y_circ_imp - y_filt_imp);        % Erro ponto a ponto frente a filter() [amplitude]
+erro_imp_conv_max   = max(abs(y_circ_imp - y_conv_imp(1:L_imp))); % Erro frente aos L_imp primeiros pontos de conv() [amplitude]
 erro_imp_h_vet      = abs(y_circ_imp(1:N) - h);            % Erro nos primeiros N pontos frente a h[k] [amplitude]
+num_retornos_imp    = floor((L_imp - 1) / N) + 1;          % Quantidade de retornos circulares (1 -> N) de idx_recente [contagem]
 
 erro_max_imp_filter = max(erro_imp_filter_vet);            % Erro absoluto maximo (fir_circular vs filter) [amplitude]
 erro_max_imp_h      = max(erro_imp_h_vet);                 % Erro absoluto maximo nos N primeiros pontos vs h[k] [amplitude]
@@ -81,8 +84,11 @@ erro_max_imp_cauda  = max(abs(y_circ_imp((N + 1):end)));   % Amplitude residual 
 
 fprintf('--- TESTE 1: RESPOSTA AO IMPULSO UNITARIO (L = %d amostras) ---\n', L_imp);
 fprintf('  Erro abs. maximo |fir_circular(delta,h) - filter(h,1,delta)| : %.6e\n', erro_max_imp_filter);
+fprintf('  Erro abs. maximo |fir_circular(1:L) - conv(delta,h)(1:L)|    : %.6e (conv total = %d amostras)\n', ...
+    erro_imp_conv_max, numel(y_conv_imp));
 fprintf('  Erro abs. maximo |fir_circular(1:N) - h(1:N)|                : %.6e\n', erro_max_imp_h);
-fprintf('  Amplitude maxima na cauda nula (n >= N)                      : %.6e\n\n', erro_max_imp_cauda);
+fprintf('  Amplitude maxima na cauda nula (n >= N)                      : %.6e\n', erro_max_imp_cauda);
+fprintf('  Retornos circulares (wrap-around 1 -> N) de idx_recente      : %d vezes (L > N)\n\n', num_retornos_imp);
 
 %% 3. Teste 2: Sinal Composto por Duas Senoides (500 Hz e 3.000 Hz)
 f1_Hz  = 500;                                 % Frequencia da senoide na banda passante [Hz]
@@ -97,13 +103,19 @@ x_sen  = x_500 + x_3000;                      % Sinal de entrada composto x[n] [
 
 y_circ_sen = fir_circular(x_sen, h);          % Saida filtrada via buffer circular [amplitude]
 y_filt_sen = filter(h, 1, x_sen);             % Saida de referencia via filter() [amplitude]
+y_conv_sen = conv(x_sen, h);                  % Convolucao completa incluindo cauda de M amostras [amplitude]
 
 erro_sen_filter_vet = abs(y_circ_sen - y_filt_sen); % Erro absoluto ponto a ponto [amplitude]
 erro_max_sen_filter = max(erro_sen_filter_vet);     % Erro absoluto maximo nas duas senoides [amplitude]
+erro_max_sen_conv   = max(abs(y_circ_sen - y_conv_sen(1:L_sen))); % Erro frente a conv(x,h)(1:L_sen) [amplitude]
+num_retornos_sen    = floor((L_sen - 1) / N) + 1;   % Quantidade de retornos circulares de idx_recente [contagem]
 
 fprintf('--- TESTE 2: SINAL DE DUAS SENOIDES (%d Hz + %d Hz, L = %d amostras) ---\n', ...
     f1_Hz, f2_Hz, L_sen);
-fprintf('  Erro abs. maximo |fir_circular(x,h) - filter(h,1,x)|         : %.6e\n\n', erro_max_sen_filter);
+fprintf('  Erro abs. maximo |fir_circular(x,h) - filter(h,1,x)|         : %.6e\n', erro_max_sen_filter);
+fprintf('  Erro abs. maximo |fir_circular(1:L) - conv(x,h)(1:L)|        : %.6e (conv total = %d amostras)\n', ...
+    erro_max_sen_conv, numel(y_conv_sen));
+fprintf('  Retornos circulares (wrap-around 1 -> N) de idx_recente      : %d vezes (L > N)\n\n', num_retornos_sen);
 
 %% 4. Ganhos Exatos em 500 Hz e 3.000 Hz via freqz e Comparacao com a Mascara
 freqs_teste_Hz = [f1_Hz, f2_Hz];              % Frequencias avaliadas pontualmente via freqz [Hz]
@@ -307,7 +319,6 @@ close(fig_B2);
 
 fprintf('Arquivos gerados com sucesso:\n');
 fprintf('  - %s\n', caminho_tab_B1);
-fprintf('  - %s\n', fullfile(specs.caminhos.results, 'tikz_buffer_circular.tex'));
 fprintf('  - %s (.pdf e .png)\n', fullfile(specs.caminhos.figures, 'fig_B1_impulso_comparacao'));
 fprintf('  - %s (.pdf e .png)\n\n', fullfile(specs.caminhos.figures, 'fig_B2_senoides_temporal'));
 

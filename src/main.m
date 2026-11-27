@@ -124,8 +124,11 @@ fprintf(fid_txt, '  Atenuacao minima na banda de rejeicao  : %.4f dB (>= 45,00 d
 fprintf(fid_txt, '  Soma dos coeficientes sum(h[k])        : %.16f\n', res_A.soma_coef);
 fprintf(fid_txt, '  Ganho DC                               : %.6f dB\n', res_A.ganho_dc_dB);
 fprintf(fid_txt, '  Erro maximo de simetria                : %.4e\n', res_A.erro_simetria_max);
-fprintf(fid_txt, '  Atraso de grupo constante              : %.1f amostras (%.4f ms)\n\n', ...
+fprintf(fid_txt, '  Atraso de grupo constante              : %.1f amostras (%.4f ms)\n', ...
     res_A.atraso_grupo_amostras, res_A.atraso_grupo_ms);
+fprintf(fid_txt, '  Erro maximo |h - fir1(M,fc,hamming)|   : %.6e\n', res_A.erro_max_fir1);
+fprintf(fid_txt, '  Atraso medido via grpdelay (passante)  : %.6f amostras (desvio max = %.6e)\n\n', ...
+    res_A.atraso_gd_medio, res_A.desvio_gd_max);
 
 fprintf(fid_txt, '2. ETAPA A2 - COMPARACAO JANELAMENTO (HAMMING) VS EQUIRIPPLE (FILTER DESIGNER)\n');
 fprintf(fid_txt, '  [Janelamento Hamming]\n');
@@ -180,8 +183,10 @@ fprintf(fid_txt, '    Coeficientes iguais a zero           : %d (k = [%s])\n', .
 fprintf(fid_txt, '    Erro maximo de simetria              : %.4e\n', res_C.erro_sim_Q17);
 fprintf(fid_txt, '    Soma dos coeficientes / Ganho DC     : %.8f (%+.6f dB)\n', ...
     res_C.soma_Q17, res_C.aval_Q17.ganho_dc_dB);
-fprintf(fid_txt, '    Desvio max. passante / Aten. min.    : %.6f dB / %.4f dB (Atende mascara: %d)\n\n', ...
+fprintf(fid_txt, '    Desvio max. passante / Aten. min.    : %.6f dB / %.4f dB (Atende mascara: %d)\n', ...
     res_C.aval_Q17.desvio_pass_max_dB, res_C.aval_Q17.aten_stop_min_dB, res_C.aval_Q17.atende_mascara);
+fprintf(fid_txt, '  Norma L1 sum(|hQ|): Q1.15 = %.8f | Q1.7 = %.8f\n\n', ...
+    res_C.soma_abs_Q115, res_C.soma_abs_Q17);
 
 fprintf(fid_txt, '5. ETAPA D - QUANTIZACAO DAS AMOSTRAS DE ENTRADA EM Q1.7 E ANALISE DE SNR\n');
 fprintf(fid_txt, '  Janela de regime permanente            : n = %d..%d (%d amostras = 48 periodos de 16 amostras)\n', ...
@@ -222,6 +227,16 @@ fprintf(fid_txt, '  Bits de guarda no acumulador           : %d bit (norma L1) |
     res_E.bits_guarda_norma_L1, res_E.bits_guarda_pior_caso_N, res_E.N);
 fprintf(fid_txt, '  Exemplo overflow (0,75 + 0,50 = +1,25) : Saturacao = +%.7f (erro = %.7f) | Wrap-Around = %.7f (erro = %.7f)\n\n', ...
     res_E.soma_saturada, res_E.erro_abs_saturada, res_E.soma_wrap, res_E.erro_abs_wrap);
+fprintf(fid_txt, '  Amplitude maxima de entrada (Aula 18)  : K = %d passos -> |x[n]| <= %.6f (pico %.4f | K+1: %.4f passos)\n', ...
+    res_E.K_max_entrada, res_E.A_max_entrada, res_E.pico_saida_K_passos, res_E.pico_saida_K1_passos);
+fprintf(fid_txt, '  Coeficientes / sum(|h|)                : ganho DC = %.6f (%.4f dB) antes de quantizar\n', ...
+    res_E.ganho_dc_esc, res_E.ganho_dc_esc_dB);
+fprintf(fid_txt, '  Escalonados em Q1.7 (armazenados)      : sum(|hq|) = %.7f | sum(hq) = %.7f (%.4f dB) | pico = %.7f (overflow = %d)\n', ...
+    res_E.soma_abs_h_esc_Q17, res_E.soma_h_esc_Q17, res_E.ganho_dc_esc_Q17_dB, res_E.pico_esc_Q17, res_E.overflow_esc_Q17);
+fprintf(fid_txt, '  Momento do arredondamento (exemplo)    : Q por ramo = %d/128 | Q apos soma = %d/128\n', ...
+    res_E.saida_Q_por_ramo_LSB, res_E.saida_Q_apos_soma_LSB);
+fprintf(fid_txt, '  Limite do erro (N = %d)                : Q por ramo <= %.8f | Q apos soma <= %.8f\n\n', ...
+    res_E.N, res_E.erro_max_por_ramo, res_E.erro_max_apos_soma);
 
 fprintf(fid_txt, '7. TEMPOS DE EXECUCAO\n');
 fprintf(fid_txt, '  Etapa A  : %.3f s\n', tempo_A_s);
@@ -255,7 +270,10 @@ fprintf(fid_tex, '\\newcommand{\\MetricaASomaCoefs}{%.10f}\n', res_A.soma_coef);
 fprintf(fid_tex, '\\newcommand{\\MetricaAGanhoDCdB}{%.6f}\n', res_A.ganho_dc_dB);
 fprintf(fid_tex, '\\newcommand{\\MetricaAErroSimetria}{%.4e}\n', res_A.erro_simetria_max);
 fprintf(fid_tex, '\\newcommand{\\MetricaAAtrasoAmostras}{%.1f}\n', res_A.atraso_grupo_amostras);
-fprintf(fid_tex, '\\newcommand{\\MetricaAAtrasoMs}{%.4f}\n\n', res_A.atraso_grupo_ms);
+fprintf(fid_tex, '\\newcommand{\\MetricaAAtrasoMs}{%.4f}\n', res_A.atraso_grupo_ms);
+fprintf(fid_tex, '\\newcommand{\\MetricaAErroFirI}{%.6e}\n', res_A.erro_max_fir1);
+fprintf(fid_tex, '\\newcommand{\\MetricaAAtrasoGdMedio}{%.6f}\n', res_A.atraso_gd_medio);
+fprintf(fid_tex, '\\newcommand{\\MetricaAAtrasoGdDesvio}{%.6e}\n\n', res_A.desvio_gd_max);
 
 % Etapa A2
 fprintf(fid_tex, '%% --- Etapa A2: Comparacao com Equiripple ---\n');
@@ -263,11 +281,11 @@ fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqN}{%d}\n', res_A2.N_equiripple);
 fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqOrdem}{%d}\n', res_A2.ordem_equiripple);
 fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqDesvioPassdB}{%.6f}\n', res_A2.aval_equiripple.desvio_pass_max_dB);
 fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqAtenStopdB}{%.4f}\n', res_A2.aval_equiripple.aten_stop_min_dB);
-fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqGanhoDCdB}{%.6f}\n', res_A2.aval_equiripple.ganho_dc_dB);
+fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqGanhoDCdB}{%+.6f}\n', res_A2.aval_equiripple.ganho_dc_dB);
 fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqSomaCoefs}{%.6f}\n', sum(res_A2.h_equiripple));
 fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqAtrasoAmostras}{%.1f}\n', res_A2.ordem_equiripple / 2);
 fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqAtrasoMs}{%.4f}\n', (res_A2.ordem_equiripple / (2 * specs.Fs)) * 1000);
-fprintf(fid_tex, '\\newcommand{\\MetricaAIIReducaoCoefsPerc}{%.1f}\n\n', reducao_coefs_perc);
+fprintf(fid_tex, '\\newcommand{\\MetricaAIIReducaoCoefsPerc}{%.2f}\n\n', reducao_coefs_perc);
 
 % Etapa B
 fprintf(fid_tex, '%% --- Etapa B: Buffer Circular ---\n');
@@ -293,7 +311,9 @@ fprintf(fid_tex, '\\newcommand{\\MetricaCEQMQVII}{%.6e}\n', res_C.eqm_Q17);
 fprintf(fid_tex, '\\newcommand{\\MetricaCSomaQVII}{%.8f}\n', res_C.soma_Q17);
 fprintf(fid_tex, '\\newcommand{\\MetricaCGanhoDCQVIIdB}{%.6f}\n', res_C.aval_Q17.ganho_dc_dB);
 fprintf(fid_tex, '\\newcommand{\\MetricaCDesvioPassQVIIdB}{%.6f}\n', res_C.aval_Q17.desvio_pass_max_dB);
-fprintf(fid_tex, '\\newcommand{\\MetricaCAtenStopQVIIdB}{%.4f}\n\n', res_C.aval_Q17.aten_stop_min_dB);
+fprintf(fid_tex, '\\newcommand{\\MetricaCAtenStopQVIIdB}{%.4f}\n', res_C.aval_Q17.aten_stop_min_dB);
+fprintf(fid_tex, '\\newcommand{\\MetricaCSomaAbsQXV}{%.8f}\n', res_C.soma_abs_Q115);
+fprintf(fid_tex, '\\newcommand{\\MetricaCSomaAbsQVII}{%.8f}\n\n', res_C.soma_abs_Q17);
 
 % Etapa D
 fprintf(fid_tex, '%% --- Etapa D: Quantizacao de Amostras (Q1.7) ---\n');
@@ -313,6 +333,22 @@ fprintf(fid_tex, '\\newcommand{\\MetricaEProdTrunc}{%.7f}\n', res_E.prod_trunc_Q
 fprintf(fid_tex, '\\newcommand{\\MetricaEErroTrunc}{%+.14f}\n', res_E.erro_trunc);
 fprintf(fid_tex, '\\newcommand{\\MetricaENormaLI}{%.14f}\n', res_E.soma_abs_h);
 fprintf(fid_tex, '\\newcommand{\\MetricaENormaLIdB}{%.4f}\n', res_E.soma_abs_h_dB);
+fprintf(fid_tex, '\\newcommand{\\MetricaEKMax}{%d}\n', res_E.K_max_entrada);
+fprintf(fid_tex, '\\newcommand{\\MetricaEAMax}{%.6f}\n', res_E.A_max_entrada);
+fprintf(fid_tex, '\\newcommand{\\MetricaEPicoK}{%.4f}\n', res_E.pico_saida_K_passos);
+fprintf(fid_tex, '\\newcommand{\\MetricaEPicoKI}{%.4f}\n', res_E.pico_saida_K1_passos);
+fprintf(fid_tex, '\\newcommand{\\MetricaEGanhoDCEsc}{%.6f}\n', res_E.ganho_dc_esc);
+fprintf(fid_tex, '\\newcommand{\\MetricaEGanhoDCEscdB}{%.4f}\n', res_E.ganho_dc_esc_dB);
+fprintf(fid_tex, '\\newcommand{\\MetricaESomaAbsEscQ}{%.7f}\n', res_E.soma_abs_h_esc_Q17);
+fprintf(fid_tex, '\\newcommand{\\MetricaESomaAbsEscQInt}{%d}\n', round(res_E.soma_abs_h_esc_Q17 * 128));
+fprintf(fid_tex, '\\newcommand{\\MetricaESomaEscQ}{%.7f}\n', res_E.soma_h_esc_Q17);
+fprintf(fid_tex, '\\newcommand{\\MetricaESomaEscQInt}{%d}\n', round(res_E.soma_h_esc_Q17 * 128));
+fprintf(fid_tex, '\\newcommand{\\MetricaEGanhoDCEscQdB}{%.4f}\n', res_E.ganho_dc_esc_Q17_dB);
+fprintf(fid_tex, '\\newcommand{\\MetricaEPicoEscQ}{%.7f}\n', res_E.pico_esc_Q17);
+fprintf(fid_tex, '\\newcommand{\\MetricaEQRamo}{%d}\n', res_E.saida_Q_por_ramo_LSB);
+fprintf(fid_tex, '\\newcommand{\\MetricaEQSoma}{%d}\n', res_E.saida_Q_apos_soma_LSB);
+fprintf(fid_tex, '\\newcommand{\\MetricaEErroRamo}{%.8f}\n', res_E.erro_max_por_ramo);
+fprintf(fid_tex, '\\newcommand{\\MetricaEErroSoma}{%.8f}\n', res_E.erro_max_apos_soma);
 
 fclose(fid_tex);
 
@@ -324,11 +360,11 @@ arquivos_esperados = {
     fullfile(specs.caminhos.results, 'tab_A2_metricas_finais.csv');
     fullfile(specs.caminhos.results, 'tab_A2_comparacao_equiripple.csv');
     fullfile(specs.caminhos.results, 'tab_B1_erros_e_ganhos.csv');
-    fullfile(specs.caminhos.results, 'tikz_buffer_circular.tex');
     fullfile(specs.caminhos.results, 'tab_C1_coeficientes_erros.csv');
     fullfile(specs.caminhos.results, 'tab_C2_metricas_quant_coef.csv');
     fullfile(specs.caminhos.results, 'tab_D1_snr_comparacao.csv');
     fullfile(specs.caminhos.results, 'tab_E1_produto_Q17.csv');
+    fullfile(specs.caminhos.results, 'tab_E2_limite_amplitude.csv');
     fullfile(specs.caminhos.results, 'resumo_metricas.txt');
     fullfile(specs.caminhos.results, 'metricas_relatorio.tex');
     fullfile(specs.caminhos.figures, 'fig_A1_impulso_janela.pdf');

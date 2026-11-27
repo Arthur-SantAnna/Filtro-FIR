@@ -13,6 +13,7 @@ Projeto de implementação, validação numérica e documentação técnica de u
 ## Documentação de Referência
 
 - **[Roteiro Oficial da Prática 3](docs/Roteiro_pra%CC%81tica3-1.pdf):** Enunciado original, especificações, requisitos das etapas e critérios de entrega.
+- **[Notas de Aula (Aulas 12 a 18)](docs/):** Material teórico de referência da disciplina, incluindo [Aula_17.pdf](docs/Aula_17.pdf) e [Aula_18.pdf](docs/Aula_18.pdf) sobre efeitos de precisão finita, momento do arredondamento, limite de amplitude de entrada e *Filter Designer*.
 - **[Roadmap de Implementação](docs/ROADMAP.md):** Plano detalhado por fases (Fases 0 a 9), checklists concluídos e histórico dos valores numéricos obtidos.
 - **[Guia de Padrões para Agentes (AGENTS.md)](AGENTS.md):** Regras técnicas, convenções de código e restrições obrigatórias por etapa.
 
@@ -61,10 +62,10 @@ Todas as etapas estão implementadas de forma modular em `src/` e consolidadas n
    - **Caso 2 ($500\text{ Hz} + 3.000\text{ Hz}$):** $\text{SNR}_{\text{in}} = 46{,}8428\text{ dB} \to \text{SNR}_{\text{out}} = 57{,}7056\text{ dB}$ ($\Delta\text{SNR} = +10{,}8628\text{ dB}$, com queda simultânea da potência do sinal útil pela rejeição de $3.000\text{ Hz}$).
 
 6. **Etapa E — Precisão Aritmética e *Overflow* ([etapa_E_ponto_fixo.m](src/etapa_E_ponto_fixo.m)):**
-   - Comparação numérica em Q1.7 ($79/128 \times 45/128$) entre produto completo em Q2.14, arredondamento (`round`) e truncamento (`floor`), cálculo da norma $\ell_1$ ($\sum |h[k]| = 1{,}473395$, $1$ bit de guarda pela norma ou $5$ bits no pior caso genérico) e exemplo de saturação vs *wrap-around*.
+   - Comparação numérica em Q1.7 ($79/128 \times 45/128$) entre produto completo em Q2.14, arredondamento (`round`) e truncamento (`floor`), momento do arredondamento na soma MAC ($N\Delta/2$ vs. $\Delta/2$), cálculo da norma $\ell_1$ ($\sum |h[k]| = 1{,}473395$, $1$ bit de guarda pela norma ou $5$ bits no pior caso genérico), amplitude máxima de entrada sem *overflow* em Q1.7 ($|x[n]| \le 86/128 = 0{,}671875$, `results/tab_E2_limite_amplitude.csv`), verificação dos coeficientes escalonados armazenados e exemplo de saturação vs. *wrap-around*.
 
-7. **Relatório Técnico LaTeX ([main.tex](report/main.tex)):**
-   - Arquivo único autocontido pronto para o **Overleaf**, com diagrama TikZ do buffer circular embutido, 8 figuras vetoriais PDF, 9 tabelas, respostas às questões interpretativas e conclusão técnica estruturada nos 5 eixos solicitados pelo roteiro.
+7. **Relatório Técnico LaTeX ([main.tex](report/main.tex) e [main.pdf](report/main.pdf)):**
+   - Arquivo único autocontido pronto para o **Overleaf**, alinhado às Aulas 12 a 18, com diagrama TikZ do buffer circular embutido, 8 figuras vetoriais PDF, 9 tabelas sincronizadas com `results/`, respostas a todas as questões interpretativas e conclusão técnica estruturada nos 5 eixos solicitados pelo roteiro.
 
 ---
 

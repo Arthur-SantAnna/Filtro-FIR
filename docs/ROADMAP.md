@@ -461,6 +461,12 @@ Filtro-FIR/
 > - **Cópia local `.pptx`:** `slides/Apresentacao_Pratica3_Filtro_FIR.pptx` (`3.401.266 bytes`, exportada via `gslides readonly export`)
 > - **Escopo validado:** 13 slides enxutos inspecionados visualmente via `gslides readonly export-thumbnail` (zero cortes, zero sobreposições, 8 gráficos MATLAB em tamanho protagonista e 100% editável nativamente).
 
+> **Revisão e Auditoria Final com a Aula 18 (27/11/2026) — CONCLUÍDA:**
+> - [x] Scripts estendidos e auditados: `etapa_A_janelamento.m` (conferência com `fir1` + `grpdelay` e curvas comparativas dos candidatos reprovados $N=21$ e $N=22$ junto a $N=23$ em `fig_A2_magnitude_mascara`), `etapa_B_validacao.m` (conferência com `conv(x,h)` e contagem de retornos circulares de `idx_recente`), `etapa_C_quant_coef.m` (`sum(abs(hQ))` em Q1.15/Q1.7), `etapa_E_ponto_fixo.m` (amplitude máxima de entrada $K/128$, escalonamento por `1/sum(abs(h))` verificado nos coeficientes armazenados, momento do arredondamento; nova tabela `results/tab_E2_limite_amplitude.csv`) e `main.m` (novas macros com precisão sincronizada e auditoria de 29 artefatos).
+> - [x] Execução oficial no MATLAB R2026b local (`31,58 s`, código `0`, `29/29` artefatos `[OK]`), sincronizando integralmente `data/`, `figures/` e `results/` (`results/tab_E2_limite_amplitude.csv`, `resumo_metricas.txt`, `metricas_relatorio.tex`, `tab_A2_metricas_finais.csv` e `tab_C2_metricas_quant_coef.csv`), com erro máximo nas senoides da Etapa B confirmado em `3,330669e-16`.
+> - [x] Consolidação oficial em `report/main.tex` e `report/main.pdf` (**19 páginas**, removidos os rascunhos `main_v02.*`), com zero erros, zero referências indefinidas e zero `Overfull`/`Underfull \hbox`: texto unificado alinhado às Aulas 12 a 18, varredura completa $N = 15 \dots 45$, polos/zeros e parâmetros do *Filter Designer* (`Apass = 0,2 dB`, sufixo `_Num`), `Listagem 1` 100% em PT-BR sem quebras de comentário, sinais explícitos `+` e faixas `a` no `siunitx`, paginação equilibrada com `[!htbp]` + `\FloatBarrier` e `Referências` isolada na página 19 (13 itens citados).
+> - [x] Corrigido (27/11/2026): `main.m` exigia `results/tikz_buffer_circular.tex`, que nenhum script gera (o diagrama TikZ fica embutido em `report/main.tex`). O arquivo saiu da lista de verificação do `main.m` e da Etapa B.
+
 ---
 
 ## 5. Cronograma Sugerido (23/11/2026 → 02/12/2026)

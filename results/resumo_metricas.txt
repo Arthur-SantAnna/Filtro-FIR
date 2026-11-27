@@ -26,6 +26,8 @@ Professor  : Elio Pithon Sarno Filho
   Ganho DC                               : 0.000000 dB
   Erro maximo de simetria                : 0.0000e+00
   Atraso de grupo constante              : 11.0 amostras (1.3750 ms)
+  Erro maximo |h - fir1(M,fc,hamming)|   : 5.551115e-17
+  Atraso medido via grpdelay (passante)  : 11.000000 amostras (desvio max = 0.000000e+00)
 
 2. ETAPA A2 - COMPARACAO JANELAMENTO (HAMMING) VS EQUIRIPPLE (FILTER DESIGNER)
   [Janelamento Hamming]
@@ -66,6 +68,7 @@ Professor  : Elio Pithon Sarno Filho
     Erro maximo de simetria              : 0.0000e+00
     Soma dos coeficientes / Ganho DC     : 0.97656250 (-0.205999 dB)
     Desvio max. passante / Aten. min.    : 0.205999 dB / 39.8632 dB (Atende mascara: 0)
+  Norma L1 sum(|hQ|): Q1.15 = 1.47332764 | Q1.7 = 1.47656250
 
 5. ETAPA D - QUANTIZACAO DAS AMOSTRAS DE ENTRADA EM Q1.7 E ANALISE DE SNR
   Janela de regime permanente            : n = 32..799 (768 amostras = 48 periodos de 16 amostras)
@@ -92,11 +95,17 @@ Professor  : Elio Pithon Sarno Filho
   Bits de guarda no acumulador           : 1 bit (norma L1) | 5 bits (pior caso N=23)
   Exemplo overflow (0,75 + 0,50 = +1,25) : Saturacao = +0.9921875 (erro = 0.2578125) | Wrap-Around = -0.7500000 (erro = 2.0000000)
 
+  Amplitude maxima de entrada (Aula 18)  : K = 86 passos -> |x[n]| <= 0.671875 (pico 126.7120 | K+1: 128.1854 passos)
+  Coeficientes / sum(|h|)                : ganho DC = 0.678704 (-3.3664 dB) antes de quantizar
+  Escalonados em Q1.7 (armazenados)      : sum(|hq|) = 1.0078125 | sum(hq) = 0.6953125 (-3.1564 dB) | pico = 0.9999390 (overflow = 1)
+  Momento do arredondamento (exemplo)    : Q por ramo = 10/128 | Q apos soma = 9/128
+  Limite do erro (N = 23)                : Q por ramo <= 0.08984375 | Q apos soma <= 0.00390625
+
 7. TEMPOS DE EXECUCAO
-  Etapa A  : 10.806 s
-  Etapa A2 : 3.351 s
-  Etapa B  : 4.919 s
-  Etapa C  : 3.415 s
-  Etapa D  : 6.665 s
-  Etapa E  : 0.062 s
-  TOTAL    : 29.281 s
+  Etapa A  : 11.771 s
+  Etapa A2 : 3.448 s
+  Etapa B  : 5.586 s
+  Etapa C  : 3.535 s
+  Etapa D  : 7.085 s
+  Etapa E  : 0.084 s
+  TOTAL    : 31.578 s

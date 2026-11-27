@@ -156,6 +156,109 @@ fprintf('  Limite superior de saida p/ |x[n]| <= 1  : |y[n]| <= %.14f (excede +1
 fprintf('  Bits de guarda no acumulador (norma L1)  : ceil(log2(%.4f)) = %d bit extra\n', soma_abs_h, bits_guarda_norma_L1);
 fprintf('  Bits de guarda no acumulador (N=%d somas): ceil(log2(%d))     = %d bits extras\n\n', N, N, bits_guarda_pior_caso_N);
 
+%% 4b. Amplitude Maxima de Entrada, Escalonamento dos Coeficientes e Momento do Arredondamento (Aula 18)
+% (a) Amplitude de entrada que evita overflow na saida Q1.7:
+%     |y[n]| <= sum(|h[k]|) * A. Com A = K/128 (K passos de entrada), exige-se
+%     sum(|h[k]|) * K <= 127 passos (maior valor positivo de Q1.7 = 127/128).
+pico_max_passos       = escala_Q17 * max_Q17;                % Maior pico positivo da saida Q1.7 (127) [passos]
+K_max_entrada         = floor(pico_max_passos / soma_abs_h); % Maior numero de passos de entrada sem overflow [passos]
+A_max_entrada         = K_max_entrada / escala_Q17;          % Amplitude maxima de entrada sem overflow [amplitude]
+pico_saida_K_passos   = soma_abs_h * K_max_entrada;          % Pico de saida no pior caso para K_max [passos]
+pico_saida_K1_passos  = soma_abs_h * (K_max_entrada + 1);    % Pico de saida no pior caso para K_max + 1 [passos]
+
+% (b) Alternativa: dividir os coeficientes por sum(|h|) e admitir entrada ate 127/128.
+%     O ganho DC cai para 1/sum(|h|) e os novos coeficientes ainda precisam ser
+%     arredondados para Q1.7; a verificacao final usa os coeficientes armazenados.
+h_esc               = h / soma_abs_h;                          % Coeficientes escalonados por 1/sum(|h|) [adimensional]
+ganho_dc_esc        = sum(h_esc);                              % Ganho DC apos escalonamento (antes da quantizacao) [adimensional]
+ganho_dc_esc_dB     = 20 * log10(ganho_dc_esc);                % Ganho DC apos escalonamento [dB]
+int_h_esc_Q17       = round(h_esc * escala_Q17);               % Coeficientes escalonados armazenados em Q1.7 (inteiros) [LSB de Q1.7]
+h_esc_Q17           = int_h_esc_Q17 / escala_Q17;              % Coeficientes escalonados armazenados em Q1.7 [adimensional]
+soma_abs_h_esc_Q17  = sum(abs(h_esc_Q17));                     % sum(abs(hq)) dos coeficientes armazenados [adimensional]
+soma_h_esc_Q17      = sum(h_esc_Q17);                          % sum(hq) dos coeficientes armazenados (ganho DC) [adimensional]
+ganho_dc_esc_Q17_dB = 20 * log10(soma_h_esc_Q17);              % Ganho DC dos coeficientes armazenados [dB]
+pico_esc_Q17        = soma_abs_h_esc_Q17 * max_Q17;            % Pico de saida no pior caso para entrada ate 127/128 [amplitude]
+overflow_esc_Q17    = pico_esc_Q17 > max_Q17;                  % Indica se o pior caso ainda excede 127/128 [logico]
+
+% (c) Momento do arredondamento: exemplo da Aula 18 (dois produtos de 4,5/128 e
+%     tres produtos nulos) e limite do erro para o filtro de N coeficientes.
+produtos_exemplo_LSB   = [4.5, 4.5, 0, 0, 0];                  % Produtos completos do exemplo [LSB de Q1.7]
+saida_Q_por_ramo_LSB   = sum(round(produtos_exemplo_LSB));     % Arredondando cada produto antes da soma [LSB de Q1.7]
+saida_Q_apos_soma_LSB  = round(sum(produtos_exemplo_LSB));     % Arredondando uma unica vez apos a soma [LSB de Q1.7]
+erro_max_por_ramo      = N * delta_Q17 / 2;                    % Limite do erro com Q em cada um dos N ramos [amplitude]
+erro_max_apos_soma     = delta_Q17 / 2;                        % Limite do erro com Q unico apos a soma [amplitude]
+
+fprintf('--- 2b. AMPLITUDE MAXIMA DE ENTRADA E ESCALONAMENTO (AULA 18) ---\n');
+fprintf('  Passos de entrada sem overflow (K)       : floor(127 / %.6f) = %d -> |x[n]| <= %d/128 = %.6f\n', ...
+    soma_abs_h, K_max_entrada, K_max_entrada, A_max_entrada);
+fprintf('  Pico de saida no pior caso (K e K+1)     : %.4f passos (cabe) | %.4f passos (excede 127)\n', ...
+    pico_saida_K_passos, pico_saida_K1_passos);
+fprintf('  Coeficientes / sum(|h|): ganho DC        : %.8f (%.4f dB) antes da quantizacao\n', ganho_dc_esc, ganho_dc_esc_dB);
+fprintf('  Coeficientes escalonados em Q1.7 (x128)  : [%s]\n', num2str(int_h_esc_Q17));
+fprintf('  sum(|hq|) / sum(hq) armazenados          : %.7f / %.7f (ganho DC = %.4f dB)\n', ...
+    soma_abs_h_esc_Q17, soma_h_esc_Q17, ganho_dc_esc_Q17_dB);
+fprintf('  Pico no pior caso com entrada 127/128    : %.7f (overflow = %d)\n', pico_esc_Q17, overflow_esc_Q17);
+fprintf('  Exemplo da aula (4,5/128 + 4,5/128)      : Q por ramo = %d/128 | Q apos a soma = %d/128\n', ...
+    saida_Q_por_ramo_LSB, saida_Q_apos_soma_LSB);
+fprintf('  Limite do erro (N = %d)                  : Q por ramo <= %.8f | Q apos a soma <= %.8f\n\n', ...
+    N, erro_max_por_ramo, erro_max_apos_soma);
+
+Grandeza_E2 = [
+    "Passos de entrada sem overflow (K)";
+    "Amplitude maxima de entrada K/128";
+    "Pico de saida no pior caso com K passos";
+    "Pico de saida no pior caso com K+1 passos";
+    "Ganho DC com coeficientes / sum(|h|)";
+    "Ganho DC com coeficientes / sum(|h|) em dB";
+    "sum(|hq|) dos coeficientes escalonados em Q1.7";
+    "sum(hq) dos coeficientes escalonados em Q1.7";
+    "Ganho DC dos coeficientes escalonados em Q1.7 em dB";
+    "Pico no pior caso com entrada 127/128 (escalonado Q1.7)";
+    "Overflow no pior caso (escalonado Q1.7)";
+    "Exemplo Aula 18: Q em cada ramo";
+    "Exemplo Aula 18: Q apos a soma";
+    "Limite do erro com Q em cada ramo (N*Delta/2)";
+    "Limite do erro com Q apos a soma (Delta/2)"
+    ];
+Valor_E2 = [
+    K_max_entrada;
+    A_max_entrada;
+    pico_saida_K_passos;
+    pico_saida_K1_passos;
+    ganho_dc_esc;
+    ganho_dc_esc_dB;
+    soma_abs_h_esc_Q17;
+    soma_h_esc_Q17;
+    ganho_dc_esc_Q17_dB;
+    pico_esc_Q17;
+    double(overflow_esc_Q17);
+    saida_Q_por_ramo_LSB;
+    saida_Q_apos_soma_LSB;
+    erro_max_por_ramo;
+    erro_max_apos_soma
+    ];
+Unidade_E2 = [
+    "passos (LSB Q1.7)";
+    "amplitude";
+    "passos (LSB Q1.7)";
+    "passos (LSB Q1.7)";
+    "adimensional";
+    "dB";
+    "adimensional";
+    "adimensional";
+    "dB";
+    "amplitude";
+    "logico";
+    "passos (LSB Q1.7)";
+    "passos (LSB Q1.7)";
+    "amplitude";
+    "amplitude"
+    ];
+tab_E2 = table(Grandeza_E2, Valor_E2, Unidade_E2, ...
+    'VariableNames', {'Grandeza', 'Valor', 'Unidade'});
+caminho_tab_E2 = fullfile(specs.caminhos.results, 'tab_E2_limite_amplitude.csv');
+writetable(tab_E2, caminho_tab_E2);
+
 %% 5. Exemplo Numerico Simples de Overflow em Adicao Q1.7: Saturacao vs Wrap-Around
 % Operandos positivos em Q1.7 cuja soma ultrapassa o limite superior +127/128 = 0,9921875:
 %   x1 = 96/128 = 0,7500000 (01100000_2)
@@ -378,8 +481,9 @@ tab_E1 = table(Item, Formato, Representacao_Fracionaria, Representacao_Binaria, 
 caminho_tab_E1 = fullfile(specs.caminhos.results, 'tab_E1_produto_Q17.csv');
 writetable(tab_E1, caminho_tab_E1);
 
-fprintf('Tabela exportada com sucesso:\n');
-fprintf('  - %s\n\n', caminho_tab_E1);
+fprintf('Tabelas exportadas com sucesso:\n');
+fprintf('  - %s\n', caminho_tab_E1);
+fprintf('  - %s\n\n', caminho_tab_E2);
 
 %% 7. Estrutura de Retorno
 resultado_E.int_a_Q17               = int_a_Q17;
@@ -417,4 +521,21 @@ resultado_E.erro_abs_saturada       = erro_abs_saturada;
 resultado_E.soma_wrap               = soma_wrap;
 resultado_E.erro_abs_wrap           = erro_abs_wrap;
 resultado_E.tab_E1                  = tab_E1;
+resultado_E.K_max_entrada           = K_max_entrada;
+resultado_E.A_max_entrada           = A_max_entrada;
+resultado_E.pico_saida_K_passos     = pico_saida_K_passos;
+resultado_E.pico_saida_K1_passos    = pico_saida_K1_passos;
+resultado_E.ganho_dc_esc            = ganho_dc_esc;
+resultado_E.ganho_dc_esc_dB         = ganho_dc_esc_dB;
+resultado_E.int_h_esc_Q17           = int_h_esc_Q17;
+resultado_E.soma_abs_h_esc_Q17      = soma_abs_h_esc_Q17;
+resultado_E.soma_h_esc_Q17          = soma_h_esc_Q17;
+resultado_E.ganho_dc_esc_Q17_dB     = ganho_dc_esc_Q17_dB;
+resultado_E.pico_esc_Q17            = pico_esc_Q17;
+resultado_E.overflow_esc_Q17        = overflow_esc_Q17;
+resultado_E.saida_Q_por_ramo_LSB    = saida_Q_por_ramo_LSB;
+resultado_E.saida_Q_apos_soma_LSB   = saida_Q_apos_soma_LSB;
+resultado_E.erro_max_por_ramo       = erro_max_por_ramo;
+resultado_E.erro_max_apos_soma      = erro_max_apos_soma;
+resultado_E.tab_E2                  = tab_E2;
 end

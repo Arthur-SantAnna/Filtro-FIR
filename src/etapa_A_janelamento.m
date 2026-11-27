@@ -146,6 +146,18 @@ aten_stop_min_dB      = aval_final.aten_stop_min_dB;    % Atenuacao minima na ba
 ganho_dc_dB           = aval_final.ganho_dc_dB;         % Ganho em corrente continua [dB]
 atende_mascara        = aval_final.atende_mascara;      % Status final de atendimento [logico]
 
+% Conferencia independente sugerida na Aula 18 (ferramentas complementares):
+% - fir1 com janela de Hamming gera a referencia do projeto por serie de Fourier
+%   e janelamento (fir1 tambem normaliza o ganho DC para 1);
+% - grpdelay mede numericamente o atraso de grupo na banda passante.
+h_fir1        = fir1(ordem, fc / (Fs / 2), hamming(N)); % Coeficientes de referencia via fir1 [adimensional]
+erro_max_fir1 = max(abs(h - h_fir1));                   % Erro maximo entre h proprio e fir1 [adimensional]
+
+[atraso_gd_amostras, f_gd_Hz] = grpdelay(h, 1, specs.Nfft, Fs); % Atraso de grupo medido [amostras] e frequencias [Hz]
+idx_pass_gd          = (f_gd_Hz <= Fpass);                        % Pontos da banda passante [logico]
+atraso_gd_medio      = mean(atraso_gd_amostras(idx_pass_gd));      % Atraso de grupo medio na passante [amostras]
+desvio_gd_max        = max(abs(atraso_gd_amostras(idx_pass_gd) - atraso_grupo_amostras)); % Desvio maximo em relacao a M/2 [amostras]
+
 fprintf('\n----------------------------------------------------------------------\n');
 fprintf('RESULTADO FINAL SELECIONADO (ETAPA A):\n');
 fprintf('  Menor comprimento que atende a mascara : N = %d coeficientes\n', N);
@@ -155,6 +167,9 @@ fprintf('  Atenuacao minima na banda de rejeicao  : %.4f dB (limite >= %.2f dB)\
 fprintf('  Soma dos coeficientes sum(h)           : %.16f (Ganho DC = %.4e dB)\n', soma_coef, ganho_dc_dB);
 fprintf('  Erro maximo de simetria                : %.4e\n', erro_simetria_max);
 fprintf('  Atraso de grupo                        : %.1f amostras (%.4f ms)\n', atraso_grupo_amostras, atraso_grupo_ms);
+fprintf('  Erro maximo |h - fir1(M, fc, hamming)| : %.6e\n', erro_max_fir1);
+fprintf('  Atraso de grupo medido (grpdelay)      : %.6f amostras na passante (desvio max = %.6e)\n', ...
+    atraso_gd_medio, desvio_gd_max);
 fprintf('----------------------------------------------------------------------\n');
 
 % Exporta tabela de metricas finais da Etapa A
@@ -175,7 +190,10 @@ Parametro = [
     "Ganho DC";
     "Erro maximo de simetria max|h[k] - h[N-1-k]|";
     "Atraso de grupo (amostras)";
-    "Atraso de grupo (tempo)"
+    "Atraso de grupo (tempo)";
+    "Erro maximo em relacao a fir1 (Hamming)";
+    "Atraso de grupo medio medido (grpdelay, passante)";
+    "Desvio maximo do atraso medido em relacao a M/2"
     ];
 Valor = [
     Fs;
@@ -194,7 +212,10 @@ Valor = [
     ganho_dc_dB;
     erro_simetria_max;
     atraso_grupo_amostras;
-    atraso_grupo_ms
+    atraso_grupo_ms;
+    erro_max_fir1;
+    atraso_gd_medio;
+    desvio_gd_max
     ];
 Unidade = [
     "Hz";
@@ -213,7 +234,10 @@ Unidade = [
     "dB";
     "adimensional";
     "amostras";
-    "ms"
+    "ms";
+    "adimensional";
+    "amostras";
+    "amostras"
     ];
 
 tab_A2 = table(Parametro, Valor, Unidade);
@@ -285,16 +309,30 @@ close(fig_A1);
 
 % --- Figura A2: Resposta em Magnitude (0 a 4000 Hz) e Ampliacoes (Zoom) ---
 f_Hz   = aval_final.f_Hz;   % Vetor de frequencia [Hz]
-mag_dB = aval_final.mag_dB; % Magnitude [dB]
+mag_dB = aval_final.mag_dB; % Magnitude do filtro selecionado N = 23 [dB]
+
+% Sintetiza tambem os candidatos fronteiricos reprovados N = 21 e N = 22 para comparacao visual
+[h_N21, ~, ~] = sintetizar_fir_hamming(21, omega_c_rad); % Coeficientes para N = 21 [adimensional]
+[h_N22, ~, ~] = sintetizar_fir_hamming(22, omega_c_rad); % Coeficientes para N = 22 [adimensional]
+aval_N21      = avaliar_mascara(h_N21, specs);           % Avaliacao espectral para N = 21
+aval_N22      = avaliar_mascara(h_N22, specs);           % Avaliacao espectral para N = 22
+mag_N21_dB    = aval_N21.mag_dB;                         % Magnitude para N = 21 (reprovado na rejeicao) [dB]
+mag_N22_dB    = aval_N22.mag_dB;                         % Magnitude para N = 22 (reprovado na rejeicao) [dB]
+
+cor_N21 = [0.50, 0.50, 0.50]; % Cinza para candidato reprovado N = 21
+cor_N22 = [0.85, 0.45, 0.00]; % Ambar para candidato reprovado N = 22 (N_est)
+cor_N23 = [0.00, 0.45, 0.74]; % Azul principal para filtro aprovado N = 23
 
 fig_A2 = figure('Name', 'Etapa A - Resposta em Magnitude e Mascara de Especificacoes', ...
-    'Position', [120, 120, 920, 680], 'Visible', 'off');
+    'Position', [120, 120, 940, 700], 'Visible', 'off');
 tiledlayout(fig_A2, 2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
 
 % Painel 1 (Superior, 2 colunas): Visao global de 0 a 4000 Hz
 nexttile([1, 2]);
-plot(f_Hz, mag_dB, 'Color', [0.00, 0.45, 0.74], 'LineWidth', 1.5);
+plot(f_Hz, mag_N21_dB, ':',  'Color', cor_N21, 'LineWidth', 1.15);
 hold on;
+plot(f_Hz, mag_N22_dB, '-.', 'Color', cor_N22, 'LineWidth', 1.25);
+plot(f_Hz, mag_dB,     '-',  'Color', cor_N23, 'LineWidth', 1.65);
 % Limites da mascara na banda passante (+0,1 dB e -0,1 dB de 0 a 1000 Hz)
 plot([0, Fpass], [ tol_pass_dB,  tol_pass_dB], '--r', 'LineWidth', 1.2);
 plot([0, Fpass], [-tol_pass_dB, -tol_pass_dB], '--r', 'LineWidth', 1.2, 'HandleVisibility', 'off');
@@ -302,15 +340,17 @@ plot([0, Fpass], [-tol_pass_dB, -tol_pass_dB], '--r', 'LineWidth', 1.2, 'HandleV
 plot([Fstop, Fs/2], [-aten_stop_dB, -aten_stop_dB], '--m', 'LineWidth', 1.2);
 % Linhas verticais de referencia das bordas das bandas e fc
 xline(Fpass, ':', 'Color', [0.5, 0.5, 0.5], 'LineWidth', 1.0, 'HandleVisibility', 'off');
-xline(fc,    '-.', 'Color', [0.2, 0.6, 0.2], 'LineWidth', 1.0);
+xline(fc,    '-.', 'Color', [0.15, 0.55, 0.15], 'LineWidth', 1.0);
 xline(Fstop, ':', 'Color', [0.5, 0.5, 0.5], 'LineWidth', 1.0, 'HandleVisibility', 'off');
 hold off;
-title(sprintf('Resposta em Magnitude |H(f)| do Filtro FIR Projetado (Hamming, N = %d, Ordem = %d)', N, ordem));
+title(sprintf('Resposta em Magnitude |H(f)| do Filtro FIR (Hamming: N = %d aprovado vs. N = 21 e N = 22)', N));
 xlabel('Frequência [Hz]');
 ylabel('Magnitude [dB]');
 xlim([0, Fs/2]);
 ylim([-100, 5]);
-legend({'|H(f)| projetado', ...
+legend({'N = 21 (reprovado)', ...
+    'N = 22 (N_{est}, reprovado)', ...
+    sprintf('N = %d (selecionado, M = %d)', N, ordem), ...
     sprintf('Limite passante (\\pm%.1f dB até %d Hz)', tol_pass_dB, Fpass), ...
     sprintf('Limite rejeição (-%d dB a partir de %d Hz)', round(aten_stop_dB), Fstop), ...
     sprintf('Corte ideal f_c = %d Hz', fc)}, ...
@@ -319,35 +359,42 @@ legend({'|H(f)| projetado', ...
 % Painel 2 (Inferior esquerdo): Ampliacao (Zoom) na Banda Passante (0 a 1000 Hz)
 nexttile;
 idx_zoom_pass = (f_Hz >= 0) & (f_Hz <= 1150);
-plot(f_Hz(idx_zoom_pass), mag_dB(idx_zoom_pass), 'Color', [0.00, 0.45, 0.74], 'LineWidth', 1.5);
+plot(f_Hz(idx_zoom_pass), mag_N21_dB(idx_zoom_pass), ':',  'Color', cor_N21, 'LineWidth', 1.15);
 hold on;
+plot(f_Hz(idx_zoom_pass), mag_N22_dB(idx_zoom_pass), '-.', 'Color', cor_N22, 'LineWidth', 1.25);
+plot(f_Hz(idx_zoom_pass), mag_dB(idx_zoom_pass),     '-',  'Color', cor_N23, 'LineWidth', 1.65);
 plot([0, Fpass], [ tol_pass_dB,  tol_pass_dB], '--r', 'LineWidth', 1.2);
 plot([0, Fpass], [-tol_pass_dB, -tol_pass_dB], '--r', 'LineWidth', 1.2, 'HandleVisibility', 'off');
-xline(Fpass, ':k', 'LineWidth', 1.0);
+xline(Fpass, ':k', 'LineWidth', 1.0, 'HandleVisibility', 'off');
 yline(0, ':', 'Color', [0.5, 0.5, 0.5], 'LineWidth', 0.8, 'HandleVisibility', 'off');
 hold off;
-title(sprintf('Ampliação da Banda Passante (Desvio máx = %.4f dB)', desvio_pass_max_dB));
+title(sprintf('Ampliação da Banda Passante (Desvio N=23: %.4f dB)', desvio_pass_max_dB));
 xlabel('Frequência [Hz]');
 ylabel('Magnitude [dB]');
 xlim([0, 1100]);
-ylim([-0.15, 0.15]);
-legend({'|H(f)|', sprintf('Máscara \\pm%.1f dB', tol_pass_dB), sprintf('F_{pass} = %d Hz', Fpass)}, ...
-    'Location', 'southwest');
+ylim([-0.22, 0.15]);
+legend({'N = 21', 'N = 22', sprintf('N = %d', N), sprintf('Máscara \\pm%.1f dB', tol_pass_dB)}, ...
+    'Location', 'south', 'NumColumns', 2);
 
 % Painel 3 (Inferior direito): Ampliacao (Zoom) na Banda de Rejeicao (2200 a 4000 Hz)
 nexttile;
 idx_zoom_stop = (f_Hz >= 2050) & (f_Hz <= Fs/2);
-plot(f_Hz(idx_zoom_stop), mag_dB(idx_zoom_stop), 'Color', [0.00, 0.45, 0.74], 'LineWidth', 1.5);
+plot(f_Hz(idx_zoom_stop), mag_N21_dB(idx_zoom_stop), ':',  'Color', cor_N21, 'LineWidth', 1.15);
 hold on;
+plot(f_Hz(idx_zoom_stop), mag_N22_dB(idx_zoom_stop), '-.', 'Color', cor_N22, 'LineWidth', 1.25);
+plot(f_Hz(idx_zoom_stop), mag_dB(idx_zoom_stop),     '-',  'Color', cor_N23, 'LineWidth', 1.65);
 plot([Fstop, Fs/2], [-aten_stop_dB, -aten_stop_dB], '--m', 'LineWidth', 1.2);
-xline(Fstop, ':k', 'LineWidth', 1.0);
+xline(Fstop, ':k', 'LineWidth', 1.0, 'HandleVisibility', 'off');
 hold off;
-title(sprintf('Ampliação da Banda de Rejeição (Atenuação mín = %.2f dB)', aten_stop_min_dB));
+title(sprintf('Ampliação da Banda de Rejeição (Aten. mín N=23: %.2f dB)', aten_stop_min_dB));
 xlabel('Frequência [Hz]');
 ylabel('Magnitude [dB]');
 xlim([2100, Fs/2]);
-ylim([-95, -35]);
-legend({'|H(f)|', sprintf('Máscara -%d dB', round(aten_stop_dB)), sprintf('F_{stop} = %d Hz', Fstop)}, ...
+ylim([-95, -26]);
+legend({sprintf('N = 21 (%.2f dB < 45 dB)', aval_N21.aten_stop_min_dB), ...
+    sprintf('N = 22 (%.2f dB < 45 dB)', aval_N22.aten_stop_min_dB), ...
+    sprintf('N = %d (%.2f dB \\geq 45 dB)', N, aten_stop_min_dB), ...
+    sprintf('Máscara -%d dB', round(aten_stop_dB))}, ...
     'Location', 'northeast');
 
 salvar_figura(fig_A2, 'fig_A2_magnitude_mascara', specs);
@@ -376,6 +423,9 @@ resultado_A.ganho_dc_dB           = ganho_dc_dB;
 resultado_A.atende_mascara        = atende_mascara;
 resultado_A.tab_A1                = tab_A1;
 resultado_A.tab_A2                = tab_A2;
+resultado_A.erro_max_fir1         = erro_max_fir1;
+resultado_A.atraso_gd_medio       = atraso_gd_medio;
+resultado_A.desvio_gd_max         = desvio_gd_max;
 end
 
 %% Funcao Local de Sintese por Serie de Fourier e Janela de Hamming

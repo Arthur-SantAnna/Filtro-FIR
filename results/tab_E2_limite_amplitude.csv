@@ -1,0 +1,16 @@
+Grandeza,Valor,Unidade
+Passos de entrada sem overflow (K),86,passos (LSB Q1.7)
+Amplitude maxima de entrada K/128,0.671875,amplitude
+Pico de saida no pior caso com K passos,126.712010850776,passos (LSB Q1.7)
+Pico de saida no pior caso com K+1 passos,128.185406325785,passos (LSB Q1.7)
+Ganho DC com coeficientes / sum(|h|),0.678704405545888,adimensional
+Ganho DC com coeficientes / sum(|h|) em dB,-3.36638663491064,dB
+sum(|hq|) dos coeficientes escalonados em Q1.7,1.0078125,adimensional
+sum(hq) dos coeficientes escalonados em Q1.7,0.6953125,adimensional
+Ganho DC dos coeficientes escalonados em Q1.7 em dB,-3.15639926005911,dB
+Pico no pior caso com entrada 127/128 (escalonado Q1.7),0.99993896484375,amplitude
+Overflow no pior caso (escalonado Q1.7),1,logico
+Exemplo Aula 18: Q em cada ramo,10,passos (LSB Q1.7)
+Exemplo Aula 18: Q apos a soma,9,passos (LSB Q1.7)
+Limite do erro com Q em cada ramo (N*Delta/2),0.08984375,amplitude
+Limite do erro com Q apos a soma (Delta/2),0.00390625,amplitude

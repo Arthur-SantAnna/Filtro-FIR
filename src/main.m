@@ -281,11 +281,11 @@ fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqN}{%d}\n', res_A2.N_equiripple);
 fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqOrdem}{%d}\n', res_A2.ordem_equiripple);
 fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqDesvioPassdB}{%.6f}\n', res_A2.aval_equiripple.desvio_pass_max_dB);
 fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqAtenStopdB}{%.4f}\n', res_A2.aval_equiripple.aten_stop_min_dB);
-fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqGanhoDCdB}{%.6f}\n', res_A2.aval_equiripple.ganho_dc_dB);
+fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqGanhoDCdB}{%+.6f}\n', res_A2.aval_equiripple.ganho_dc_dB);
 fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqSomaCoefs}{%.6f}\n', sum(res_A2.h_equiripple));
 fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqAtrasoAmostras}{%.1f}\n', res_A2.ordem_equiripple / 2);
 fprintf(fid_tex, '\\newcommand{\\MetricaAIIEqAtrasoMs}{%.4f}\n', (res_A2.ordem_equiripple / (2 * specs.Fs)) * 1000);
-fprintf(fid_tex, '\\newcommand{\\MetricaAIIReducaoCoefsPerc}{%.1f}\n\n', reducao_coefs_perc);
+fprintf(fid_tex, '\\newcommand{\\MetricaAIIReducaoCoefsPerc}{%.2f}\n\n', reducao_coefs_perc);
 
 % Etapa B
 fprintf(fid_tex, '%% --- Etapa B: Buffer Circular ---\n');

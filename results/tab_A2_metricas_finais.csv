@@ -1,18 +1,21 @@
 Parametro,Valor,Unidade
-Frequencia de amostragem (Fs),8000,Hz
-Banda passante (Fpass),1000,Hz
-Banda de rejeicao (Fstop),2200,Hz
-Frequencia de corte ideal (fc),1600,Hz
-Largura da banda de transicao (delta_f),1200,Hz
-Largura de transicao angular (delta_omega / pi),0.3,pi rad/amostra
-Estimativa inicial de comprimento (fator 3.3),22,coeficientes
-Estimativa alternativa de comprimento (fator 4.0),27,coeficientes
-Comprimento selecionado (N),23,coeficientes
-Ordem do filtro selecionado (M = N - 1),22,adimensional
-Desvio maximo na banda passante,0.0423234785076081,dB
-Atenuacao minima na banda de rejeicao,47.0065323405456,dB
-Soma dos coeficientes sum(h),1,adimensional
-Ganho DC,0,dB
-Erro maximo de simetria max|h[k] - h[N-1-k]|,0,adimensional
-Atraso de grupo (amostras),11,amostras
-Atraso de grupo (tempo),1.375,ms
+"Frequencia de amostragem (Fs)",8000,Hz
+"Banda passante (Fpass)",1000,Hz
+"Banda de rejeicao (Fstop)",2200,Hz
+"Frequencia de corte ideal (fc)",1600,Hz
+"Largura da banda de transicao (delta_f)",1200,Hz
+"Largura de transicao angular (delta_omega / pi)",0.3,pi rad/amostra
+"Estimativa inicial de comprimento (fator 3.3)",22,coeficientes
+"Estimativa alternativa de comprimento (fator 4.0)",27,coeficientes
+"Comprimento selecionado (N)",23,coeficientes
+"Ordem do filtro selecionado (M = N - 1)",22,adimensional
+"Desvio maximo na banda passante",0.0423234785076081,dB
+"Atenuacao minima na banda de rejeicao",47.0065323405456,dB
+"Soma dos coeficientes sum(h)",1,adimensional
+"Ganho DC",0,dB
+"Erro maximo de simetria max|h[k] - h[N-1-k]|",0,adimensional
+"Atraso de grupo (amostras)",11,amostras
+"Atraso de grupo (tempo)",1.375,ms
+"Erro maximo em relacao a fir1 (Hamming)",5.55111512312578e-17,adimensional
+"Atraso de grupo medio medido (grpdelay, passante)",11,amostras
+"Desvio maximo do atraso medido em relacao a M/2",0,amostras
